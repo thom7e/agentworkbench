@@ -219,3 +219,15 @@ button.act:hover{background:var(--hover)}
 .md blockquote{border-left:3px solid var(--line);margin:8px 0;padding:0 12px;color:var(--mut)}
 .md a{color:var(--accent);text-decoration:underline}
 .note .md p{margin:6px 0 0}
+
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:1px;flex:none}
+.dot.on{background:var(--ok)}.dot.off{background:var(--mut);opacity:.55}
+.sortbar .sw{margin-left:auto}
+.area .dormant{margin-top:10px}
+.area .dormant>summary{cursor:pointer;color:var(--mut);font-size:15px;padding:6px 0;list-style:none}
+.area .dormant>summary::-webkit-details-marker{display:none}
+.area .dormant>summary::before{content:"▸ "}.area .dormant[open]>summary::before{content:"▾ "}
+.row.grow{cursor:default}.row.grow:hover{background:transparent}
+.row .count a{color:var(--accent)}.row .nolink{color:var(--mut);border-bottom:1px dashed var(--mut)}
+.hostcard p{margin:6px 0}
+@media (max-width:760px){.sortbar{flex-wrap:wrap}.sortbar .sw{margin-left:0}}

@@ -9,6 +9,10 @@
 <label>{{ t('set.gh.owner') }}<input name="github_owner" value="{{ s.github_owner }}" autocomplete="off"></label>
 <label>{{ t('set.gh.token') }}<input type="password" name="github_token" placeholder="{{ '********' if has_token }}" autocomplete="new-password"><small>{{ t('set.gh.token.help') }}</small></label>
 <label>{{ t('set.vault') }}<input name="obsidian_vault" value="{{ s.obsidian_vault }}"><small>{{ t('set.vault.help') }}</small></label>
+<label>{{ t('set.px.url') }}<input name="proxmox_url" value="{{ s.proxmox_url }}" autocomplete="off"><small>{{ t('set.px.url.help') }}</small></label>
+<label>{{ t('set.px.id') }}<input name="proxmox_token_id" value="{{ s.proxmox_token_id }}" autocomplete="off" placeholder="user@pve!name"></label>
+<label>{{ t('set.px.secret') }}<input type="password" name="proxmox_token_secret" placeholder="{{ '********' if has_px_secret }}" autocomplete="new-password"></label>
+<label class="check"><input type="checkbox" name="proxmox_verify_tls" value="1"{% if s.proxmox_verify_tls == '1' %} checked{% endif %}> {{ t('set.px.verify') }}</label>
 <div><button class="go">{{ t('save') }}</button></div>
 </form>
 {% endblock %}

@@ -130,6 +130,58 @@ def test_docs_render_edit_and_sanitize(client):
     assert "Runbook v2" not in client.get("/p/demo-app").text
 
 
+def test_proxmox_status_ip_and_hide_stopped(client, monkeypatch):
+    import proxmox
+
+    guests_raw = [
+        {"vmid": 137, "name": "buecher", "node": "pve", "type": "lxc", "status": "running", "cpu": 0.02,
+         "mem": 300 * 1024 ** 2, "maxmem": 768 * 1024 ** 2, "uptime": 90000},
+        {"vmid": 201, "name": "holtei-app", "node": "pve", "type": "lxc", "status": "stopped", "cpu": 0,
+         "mem": 0, "maxmem": 512 * 1024 ** 2, "uptime": 0},
+        {"vmid": 150, "name": "ohne-projekt", "node": "thom7e", "type": "lxc", "status": "running", "cpu": 0,
+         "mem": 1, "maxmem": 2, "uptime": 5},
+    ]
+
+    def fake(path):
+        if path.startswith("/cluster/resources"):
+            return guests_raw
+        if path.endswith("/config"):
+            vmid = path.split("/")[-2]
+            return {"net0": f"name=eth0,bridge=vmbr0,ip=192.168.178.{int(vmid) % 200},type=veth"}
+        return []
+
+    monkeypatch.setattr(proxmox, "_request", fake)
+    proxmox._cache.clear()
+    client.post("/admin/settings", data={
+        "site_title": "T", "language": "de", "areas": "Allgemein", "dormant_days": 90, "default_sort": "aktuell",
+        "github_owner": "", "github_token": "", "obsidian_vault": "",
+        "proxmox_url": "https://pve.example:8006", "proxmox_token_id": "u@pve!t", "proxmox_token_secret": "secret"})
+    client.post("/admin/projects", data={"name": "Bibliothek", "area": "Allgemein", "vmid": 137})
+    client.post("/admin/projects", data={"name": "Holtei App", "area": "Allgemein", "vmid": 201})
+    page = client.get("/").text
+    assert "Container und VMs" in page and "ohne-projekt" in page and "Projekt anlegen" in page
+    assert 'class="dot on"' in page and 'class="dot off"' in page
+    hidden = client.get("/?hide_stopped=1").text
+    assert "Holtei App" not in hidden and "Bibliothek" in hidden
+    proj = client.get("/p/bibliothek").text
+    assert "Läuft auf" in proj and "192.168.178.137" in proj
+    token = client.post("/admin/tokens", data={"name": "t6"}).text.split('class="token">')[1].split("<")[0]
+    brief = TestClient(app).get("/api/projects/bibliothek", headers={"Authorization": f"Bearer {token}"}).text
+    assert "Runs on: LXC 137 buecher" in brief
+    proxmox._cache.clear()
+
+
+def test_patch_todo_moves_between_projects(client):
+    token = client.post("/admin/tokens", data={"name": "t7"}).text.split('class="token">')[1].split("<")[0]
+    h = {"Authorization": f"Bearer {token}"}
+    other = TestClient(app)
+    client.post("/admin/projects", data={"name": "Target", "area": "Allgemein"})
+    tid = other.post("/api/projects/demo-app/todos", json={"text": "Move me"}, headers=h).json()["id"]
+    assert other.patch(f"/api/todos/{tid}", json={"project": "target", "prio": 1}, headers=h).status_code == 200
+    assert "Move me" in other.get("/api/projects/target", headers=h).text
+    assert other.patch(f"/api/todos/{tid}", json={"project": "nope"}, headers=h).status_code == 404
+
+
 def test_cross_origin_post_is_blocked(client):
     r = client.post("/logout", headers={"Origin": "https://evil.example"})
     assert r.status_code == 403

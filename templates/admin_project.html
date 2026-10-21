@@ -11,6 +11,7 @@
 <label>{{ t('proj.summary') }}<textarea name="summary" rows="3">{{ p.summary }}</textarea></label>
 <label>{{ t('proj.repo') }}<input name="repo" value="{{ p.repo }}" list="repos" autocomplete="off"></label>
 <datalist id="repos">{% for r in repos %}<option value="{{ r }}">{% endfor %}</datalist>
+<label>{{ t('proj.vmid') }}<input type="number" name="vmid" min="0" value="{{ p.vmid or 0 }}"><small>{{ t('proj.vmid.help') }}</small></label>
 <label>{{ t('proj.wiki') }}<input name="wiki" value="{{ p.wiki }}"></label>
 <label>{{ t('proj.notes') }}<textarea name="vault_note" rows="3">{{ p.vault_note }}</textarea><small>{{ t('proj.notes.help') }}</small></label>
 <div><button class="go">{{ t('save') }}</button> <a href="/admin/projects">{{ t('cancel') }}</a></div>

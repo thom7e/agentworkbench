@@ -33,8 +33,9 @@ def home():
 @router.get("/settings", response_class=HTMLResponse)
 def settings_form(request: Request, msg: str = ""):
     return page(request, "admin_settings.html", tab="settings", msg=msg,
-                s={k: settings.get(k) for k in settings.DEFAULTS if k != "github_token"},
-                areas="\n".join(settings.areas()), has_token=bool(settings.get("github_token")))
+                s={k: settings.get(k) for k in settings.DEFAULTS if k not in ("github_token", "proxmox_token_secret")},
+                areas="\n".join(settings.areas()), has_token=bool(settings.get("github_token")),
+                has_px_secret=bool(settings.get("proxmox_token_secret")))
 
 
 @router.post("/settings")
@@ -42,6 +43,8 @@ def settings_save(
     site_title: str = Form(...), language: str = Form("de"), areas: str = Form(""),
     dormant_days: int = Form(90), default_sort: str = Form("aktuell"),
     github_owner: str = Form(""), github_token: str = Form(""), obsidian_vault: str = Form(""),
+    proxmox_url: str = Form(""), proxmox_token_id: str = Form(""), proxmox_token_secret: str = Form(""),
+    proxmox_verify_tls: str = Form(""),
 ):
     names = [a.strip() for a in areas.splitlines() if a.strip()]
     settings.put("site_title", site_title.strip() or "AgentWorkbench")
@@ -53,6 +56,11 @@ def settings_save(
     if github_token.strip():
         settings.put("github_token", github_token.strip())
     settings.put("obsidian_vault", obsidian_vault.strip())
+    settings.put("proxmox_url", proxmox_url.strip())
+    settings.put("proxmox_token_id", proxmox_token_id.strip())
+    if proxmox_token_secret.strip():
+        settings.put("proxmox_token_secret", proxmox_token_secret.strip())
+    settings.put("proxmox_verify_tls", "1" if proxmox_verify_tls else "0")
     return back("/admin/settings", "saved")
 
 
@@ -69,9 +77,9 @@ def projects_list(request: Request):
 
 
 @router.get("/projects/new", response_class=HTMLResponse)
-def project_new(request: Request):
-    blank = {"slug": "", "name": "", "status": "aktiv", "area": "", "deploy": "", "stack": "",
-             "summary": "", "repo": "", "wiki": "", "vault_note": ""}
+def project_new(request: Request, name: str = "", vmid: int = 0):
+    blank = {"slug": "", "name": name, "status": "aktiv", "area": "", "deploy": "", "stack": "",
+             "summary": "", "repo": "", "wiki": "", "vault_note": "", "vmid": vmid}
     return project_form(request, blank, True)
 
 
@@ -94,7 +102,7 @@ def project_form(request, p, is_new, msg=""):
 def project_save(
     name: str = Form(...), slug: str = Form(""), original: str = Form(""), status: str = Form("aktiv"),
     area: str = Form(""), deploy: str = Form(""), stack: str = Form(""), summary: str = Form(""),
-    repo: str = Form(""), wiki: str = Form(""), vault_note: str = Form(""),
+    repo: str = Form(""), wiki: str = Form(""), vault_note: str = Form(""), vmid: int = Form(0),
 ):
     if status not in STATUSES:
         raise HTTPException(400)
@@ -104,13 +112,13 @@ def project_save(
         if exists and not original:
             raise HTTPException(409, "slug exists")
         values = (name.strip(), status, area, deploy.strip(), stack.strip(), summary.strip(),
-                  vault_note.strip(), repo.strip(), wiki.strip())
+                  vault_note.strip(), repo.strip(), wiki.strip(), max(0, vmid))
         if original:
             con.execute("UPDATE projects SET name=?,status=?,area=?,deploy=?,stack=?,summary=?,vault_note=?,"
-                        "repo=?,wiki=? WHERE slug=?", values + (slug,))
+                        "repo=?,wiki=?,vmid=? WHERE slug=?", values + (slug,))
         else:
-            con.execute("INSERT INTO projects(name,status,area,deploy,stack,summary,vault_note,repo,wiki,slug) "
-                        "VALUES(?,?,?,?,?,?,?,?,?,?)", values + (slug,))
+            con.execute("INSERT INTO projects(name,status,area,deploy,stack,summary,vault_note,repo,wiki,vmid,slug) "
+                        "VALUES(?,?,?,?,?,?,?,?,?,?,?)", values + (slug,))
         con.commit()
     return back(f"/admin/projects/{slug}", "saved")
 
@@ -179,7 +187,7 @@ async def import_json(file: UploadFile = File(...)):
     with closing(db()) as con:
         for p in projects:
             cols = [c for c in p if c in ("slug", "name", "status", "area", "deploy", "stack", "summary",
-                                         "vault_note", "repo", "wiki", "sort")]
+                                         "vault_note", "repo", "wiki", "sort", "vmid")]
             con.execute(f"INSERT OR REPLACE INTO projects({','.join(cols)}) VALUES({','.join('?' * len(cols))})",
                         [p[c] for c in cols])
         for t in todos:

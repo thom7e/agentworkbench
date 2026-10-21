@@ -12,6 +12,10 @@ DEFAULTS = {
     "default_sort": "aktuell",
     "areas": json.dumps(["Allgemein"]),
     "obsidian_vault": "",
+    "proxmox_url": "",
+    "proxmox_token_id": "",
+    "proxmox_token_secret": "",
+    "proxmox_verify_tls": "0",
 }
 
 

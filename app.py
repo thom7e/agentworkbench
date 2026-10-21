@@ -9,6 +9,7 @@ from pydantic import BaseModel
 import auth
 import db as database
 import github
+import proxmox
 import settings
 from admin import router as admin_router
 from db import BASE, db, now
@@ -64,6 +65,9 @@ def brief(con, slug):
                      ("vault_note", "Linked notes"), ("wiki", "Wiki")):
         if p[k]:
             out.append(f"{label}: {', '.join(p[k].splitlines())}")
+    g = proxmox.by_vmid().get(p["vmid"]) if p["vmid"] and proxmox.enabled() else None
+    if g:
+        out.append(f"Runs on: {g['type'].upper()} {g['vmid']} {g['name']} (node {g['node']}), {g['ip'] or 'no ip'}, {g['status']}")
     if p["summary"]:
         out.append(p["summary"])
     notes = con.execute("SELECT * FROM notes WHERE project=? ORDER BY id DESC", (slug,)).fetchall()
@@ -150,7 +154,8 @@ def logout():
 # ---------- Web ----------
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, status: str = "aktiv", sort: str = ""):
+def index(request: Request, status: str = "aktiv", sort: str = "", hide_stopped: str = ""):
+    hide = hide_stopped == "1"
     sort = sort or settings.get("default_sort")
     area_names = settings.areas()
     dormant_days = int(settings.get("dormant_days") or 90)
@@ -164,8 +169,12 @@ def index(request: Request, status: str = "aktiv", sort: str = ""):
             (status,),
         ).fetchall()
         pushed = github.pushed_map()
-        groups = {a: [] for a in area_names}
+        px = proxmox.by_vmid() if proxmox.enabled() else {}
+        groups = {a: {"active": [], "dormant": []} for a in area_names}
         for p in projects:
+            g = px.get(p["vmid"]) if p["vmid"] else None
+            if hide and g and g["status"] != "running":
+                continue
             top = con.execute(
                 "SELECT * FROM todos WHERE project=? AND done=0 AND kind='todo' ORDER BY prio, id LIMIT 1",
                 (p["slug"],),
@@ -175,7 +184,12 @@ def index(request: Request, status: str = "aktiv", sort: str = ""):
                 (p["slug"],),
             ).fetchone()[0]
             last = max(p["last_ts"] or "", pushed.get(p["repo"].lower(), "")[:10].replace("T", " "))
-            groups[p["area"] if p["area"] in groups else area_names[0]].append((p, top, p1, last))
+            quiet = status == "aktiv" and p["open_n"] == 0 and (not last or ago_days(last) > dormant_days)
+            groups[p["area"] if p["area"] in groups else area_names[0]]["dormant" if quiet else "active"].append(
+                (p, top, p1, last, g))
+        linked = {}
+        for r in con.execute("SELECT slug, name, vmid FROM projects WHERE vmid > 0"):
+            linked.setdefault(r["vmid"], []).append(r)
         focus = con.execute(
             "SELECT t.*, p.name AS pname FROM todos t JOIN projects p ON p.slug=t.project "
             "WHERE t.done=0 AND t.kind='todo' AND t.prio=1 AND p.status='aktiv' ORDER BY p.sort, p.name, t.id"
@@ -195,24 +209,21 @@ def index(request: Request, status: str = "aktiv", sort: str = ""):
             (status,),
         ):
             board[t["prio"]].append(t)
-    for items in groups.values():
+    for grp in groups.values():
         if sort == "offen":
-            items.sort(key=lambda x: (-x[0]["open_n"], -x[2], x[0]["name"].lower()))
+            grp["active"].sort(key=lambda x: (-x[0]["open_n"], -x[2], x[0]["name"].lower()))
         else:
-            items.sort(key=lambda x: (x[3] != "", x[3]), reverse=True)
-    dormant = []
-    for items in groups.values():
-        for it in list(items):
-            if status == "aktiv" and it[0]["open_n"] == 0 and (not it[3] or ago_days(it[3]) > dormant_days):
-                items.remove(it)
-                dormant.append(it)
-    dormant.sort(key=lambda x: x[0]["name"].lower())
+            grp["active"].sort(key=lambda x: (x[3] != "", x[3]), reverse=True)
+        grp["dormant"].sort(key=lambda x: x[0]["name"].lower())
+    guest_rows = [g for g in px.values() if not (hide and g["status"] != "running")]
     return templates.TemplateResponse(
         request, "index.html",
-        {"inbox": inbox, "prs": github.open_prs(), "dormant": dormant, "dormant_days": dormant_days,
+        {"inbox": inbox, "prs": github.open_prs(), "dormant_days": dormant_days,
+         "px_enabled": bool(px) or proxmox.enabled(), "hide_stopped": hide, "guests": guest_rows, "linked": linked,
          "sort": sort, "groups": groups, "focus": focus, "recent": recent, "status": status, "board": board,
          "board_projects": sorted({t["pname"] for col in board.values() for t in col}),
-         "today": today_label(), "open_total": sum(len(g) for g in groups.values())},
+         "today": today_label(),
+         "open_total": sum(len(g["active"]) + len(g["dormant"]) for g in groups.values())},
     )
 
 
@@ -231,8 +242,10 @@ def project_page(request: Request, slug: str):
         ).fetchall()
         docs = con.execute("SELECT * FROM docs WHERE project=? ORDER BY title", (slug,)).fetchall()
     gh = github.repo_detail(p["repo"]) if p["repo"] else None
+    guest = proxmox.by_vmid().get(p["vmid"]) if p["vmid"] and proxmox.enabled() else None
     return templates.TemplateResponse(
-        request, "project.html", {"p": p, "todos": todos, "log": log, "gh": gh, "notes": notes, "docs": docs}
+        request, "project.html",
+        {"p": p, "todos": todos, "log": log, "gh": gh, "notes": notes, "docs": docs, "guest": guest}
     )
 
 
@@ -444,6 +457,7 @@ class ProjectIn(BaseModel):
     vault_note: str = ""
     repo: str = ""
     wiki: str = ""
+    vmid: int = 0
 
 
 @app.get("/api/overview", response_class=PlainTextResponse)
@@ -470,10 +484,10 @@ def api_brief(slug: str):
 def api_upsert_project(p: ProjectIn):
     with closing(db()) as con:
         con.execute(
-            "INSERT INTO projects(slug,name,status,area,deploy,stack,summary,vault_note,repo,wiki) "
-            "VALUES(:slug,:name,:status,:area,:deploy,:stack,:summary,:vault_note,:repo,:wiki) "
+            "INSERT INTO projects(slug,name,status,area,deploy,stack,summary,vault_note,repo,wiki,vmid) "
+            "VALUES(:slug,:name,:status,:area,:deploy,:stack,:summary,:vault_note,:repo,:wiki,:vmid) "
             "ON CONFLICT(slug) DO UPDATE SET name=:name,status=:status,area=:area,deploy=:deploy,stack=:stack,"
-            "summary=:summary,vault_note=:vault_note,repo=:repo,wiki=:wiki",
+            "summary=:summary,vault_note=:vault_note,repo=:repo,wiki=:wiki,vmid=:vmid",
             p.model_dump(),
         )
         con.commit()
@@ -490,6 +504,7 @@ class ProjectPatch(BaseModel):
     vault_note: str | None = None
     repo: str | None = None
     wiki: str | None = None
+    vmid: int | None = None
 
 
 @app.patch("/api/projects/{slug}")
@@ -564,6 +579,27 @@ def api_search(q: str):
               for t in res["todos"]]
     lines += [f"project {p['slug']}: {p['name']}" for p in res["projects"]]
     return "\n".join(lines) or "no results"
+
+
+class TodoPatch(BaseModel):
+    project: str | None = None
+    text: str | None = None
+    prio: int | None = None
+    kind: str | None = None
+
+
+@app.patch("/api/todos/{tid}")
+def api_patch_todo(tid: int, p: TodoPatch):
+    fields = p.model_dump(exclude_none=True)
+    with closing(db()) as con:
+        if not con.execute("SELECT 1 FROM todos WHERE id=?", (tid,)).fetchone():
+            raise HTTPException(404)
+        if "project" in fields:
+            project_or_404(con, fields["project"])
+        if fields:
+            con.execute(f"UPDATE todos SET {','.join(f'{k}=?' for k in fields)} WHERE id=?", [*fields.values(), tid])
+            con.commit()
+    return {"ok": True}
 
 
 @app.post("/api/projects/{slug}/todos")

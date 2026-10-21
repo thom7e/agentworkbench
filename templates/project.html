@@ -39,6 +39,11 @@
 </div></section></div>
 
 <div>
+{% if guest %}<section><h2>Läuft auf</h2><div class="sheet hostcard">
+<p><span class="dot {{ 'on' if guest.status == 'running' else 'off' }}"></span><b>{{ 'LXC' if guest.type == 'lxc' else 'VM' }} {{ guest.vmid }} · {{ guest.name }}</b> <span class="hint2">{{ guest.status }}</span></p>
+<p>Node {{ guest.node }}{% if guest.ip %} · IP <code>{{ guest.ip }}</code>{% endif %}</p>
+<p class="hint2">CPU {{ (guest.cpu * 100)|round(0)|int }} % · RAM {{ guest.mem|gb }} von {{ guest.maxmem|gb }} · läuft seit {{ guest.uptime|uptime }}</p></div></section>
+{% elif p.vmid %}<section><h2>Läuft auf</h2><div class="sheet hostcard"><p class="hint2">Nr. {{ p.vmid }}, keine Daten von Proxmox.</p></div></section>{% endif %}
 {% if gh %}<section><h2>Git</h2>
 {% if gh.readme or gh.description %}<p class="readme">{{ gh.readme or gh.description }}</p>{% endif %}
 <p class="branches">Branches: {% for b in gh.branches %}<span class="br{{ ' main' if b == gh.default_branch }}">{{ b }}</span>{% endfor %}</p>

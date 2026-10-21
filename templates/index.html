@@ -1,5 +1,12 @@
 {% extends "base.html" %}
 {% block body %}
+{% macro dot(g) %}{% if g %}<span class="dot {{ 'on' if g.status == 'running' else 'off' }}" title="{{ 'LXC' if g.type == 'lxc' else 'VM' }} {{ g.vmid }} {{ g.name }} auf {{ g.node }}: {{ g.status }}"></span>{% endif %}{% endmacro %}
+{% macro prow(p, top, p1, last, g) %}<a class="row" href="/p/{{ p.slug }}">
+<span class="name">{{ dot(g) }}{{ p.name }}</span>
+<span class="next">{% if top %}{{ top.text|replace('**','') }}{% else %}–{% endif %}</span>
+<span class="count">{% if p1 %}<b>{{ p1 }} dringend</b>, {% endif %}{{ p.open_n }} offen</span>
+<span class="age">{{ last|ago }}</span>
+</a>{% endmacro %}
 <div class="top"><span class="brand">{{ site_title() }}</span>
 <nav>{% for s in ('aktiv','pause','archiv') %}<a href="/?status={{ s }}&sort={{ sort }}"{% if s == status %} aria-current="page"{% endif %}>{{ s }}</a>{% endfor %}<a href="/admin">{{ t('admin') }}</a><form class="inline" method="post" action="/logout"><button class="linklike">{{ t('logout') }}</button></form></nav></div>
 <div class="hello"><h1>{{ today }}</h1>
@@ -55,26 +62,28 @@
 {% endif %}
 
 <div class="sortbar">Projekte sortieren nach
-<a data-keep href="/?status={{ status }}&sort=aktuell"{% if sort != 'offen' %} aria-current="true"{% endif %}>Aktualität</a>
-<a data-keep href="/?status={{ status }}&sort=offen"{% if sort == 'offen' %} aria-current="true"{% endif %}>offenen Punkten</a></div>
-{% for area, items in groups.items() if items %}
-<section class="area"><h2>{{ area }} <small>{{ items|length }} Projekte</small></h2>
+<a data-keep href="/?status={{ status }}&sort=aktuell{{ '&hide_stopped=1' if hide_stopped }}"{% if sort != 'offen' %} aria-current="true"{% endif %}>Aktualität</a>
+<a data-keep href="/?status={{ status }}&sort=offen{{ '&hide_stopped=1' if hide_stopped }}"{% if sort == 'offen' %} aria-current="true"{% endif %}>offenen Punkten</a>
+{% if px_enabled %}<a class="sw" data-keep href="/?status={{ status }}&sort={{ sort }}{{ '' if hide_stopped else '&hide_stopped=1' }}"{% if hide_stopped %} aria-current="true"{% endif %}>Gestoppte ausblenden</a>{% endif %}</div>
+{% for area, grp in groups.items() if grp.active or grp.dormant %}
+<section class="area"><h2>{{ area }} <small>{{ grp.active|length }} Projekte{% if grp.dormant %}, {{ grp.dormant|length }} ruhend{% endif %}</small></h2>
 <div class="rows">
-{% for p, top, p1, last in items %}
-<a class="row" href="/p/{{ p.slug }}">
-<span class="name">{{ p.name }}</span>
-<span class="next">{% if top %}{{ top.text|replace('**','') }}{% else %}–{% endif %}</span>
-<span class="count">{% if p1 %}<b>{{ p1 }} dringend</b>, {% endif %}{{ p.open_n }} offen</span>
-<span class="age">{{ last|ago }}</span>
-</a>{% endfor %}
-</div></section>
+{% for p, top, p1, last, g in grp.active %}{{ prow(p, top, p1, last, g) }}{% endfor %}
+</div>
+{% if grp.dormant %}<details class="dormant"><summary>Ruhend ({{ grp.dormant|length }}): ohne offene Aufgaben, seit über {{ dormant_days }} Tagen keine Änderung</summary>
+<div class="rows">{% for p, top, p1, last, g in grp.dormant %}{{ prow(p, top, p1, last, g) }}{% endfor %}</div></details>{% endif %}
+</section>
 {% endfor %}
-{% if dormant %}
-<details class="area dormant"><summary><h2>Ruhend <small>{{ dormant|length }} Projekte ohne offene Aufgaben und seit über {{ dormant_days }} Tagen ohne Änderung</small></h2></summary>
-<div class="rows">
-{% for p, top, p1, last in dormant %}
-<a class="row" href="/p/{{ p.slug }}"><span class="name">{{ p.name }}</span><span class="next">{{ p.deploy or p.stack }}</span><span class="count">0 offen</span><span class="age">{{ last|ago }}</span></a>
-{% endfor %}</div></details>
+{% if px_enabled %}
+<section class="area"><h2>Container und VMs <small>{{ guests|length }}{{ ', nur laufende' if hide_stopped }}</small></h2>
+{% if guests %}<div class="rows">
+{% for g in guests %}<div class="row grow">
+<span class="name">{{ dot(g) }}{{ g.name }}</span>
+<span class="next">{{ 'LXC' if g.type == 'lxc' else 'VM' }} {{ g.vmid }} · Node {{ g.node }}{% if g.ip %} · {{ g.ip }}{% endif %}</span>
+<span class="count">{% if linked.get(g.vmid) %}{% for r in linked[g.vmid] %}<a href="/p/{{ r.slug }}">{{ r.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% else %}<a class="nolink" href="/admin/projects/new?vmid={{ g.vmid }}&name={{ g.name|urlencode }}">Projekt anlegen</a>{% endif %}</span>
+<span class="age">{{ g.status }}</span></div>{% endfor %}
+</div>{% else %}<p class="empty">Keine Daten von Proxmox. Adresse und Token unter Verwaltung prüfen.</p>{% endif %}
+</section>
 {% endif %}
 <script>
 (function(){

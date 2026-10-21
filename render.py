@@ -54,6 +54,19 @@ def md(text):
     return Markup(clean)
 
 
+def gb(n):
+    return f"{n / 1024 ** 3:.1f} GB".replace(".", ",") if n else "–"
+
+
+def uptime(sec):
+    if not sec:
+        return "–"
+    days, rest = divmod(int(sec), 86400)
+    return f"{days} Tage" if days else f"{rest // 3600} Std"
+
+
+templates.env.filters["gb"] = gb
+templates.env.filters["uptime"] = uptime
 templates.env.filters["md"] = md
 templates.env.filters["ago"] = ago
 templates.env.filters["fmtdate"] = lambda ts: ts[5:16].replace("-", ".", 1).replace(" ", ", ") if ts else ""

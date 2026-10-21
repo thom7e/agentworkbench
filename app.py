@@ -256,6 +256,19 @@ def web_seen(tid: int, next: str = Form("/")):
     return RedirectResponse(safe_next(next), status_code=303)
 
 
+@app.post("/t/{tid}/finished")
+def web_finished(tid: int, next: str = Form("/")):
+    with closing(db()) as con:
+        t = con.execute("SELECT * FROM todos WHERE id=?", (tid,)).fetchone()
+        if not t:
+            raise HTTPException(404)
+        con.execute("UPDATE todos SET seen=1, done=1, done_at=? WHERE id=?", (now(), tid))
+        con.execute("INSERT INTO activity(project,text,ts) VALUES(?,?,?)",
+                    (t["project"], f"erledigt: {t['text']}", now()))
+        con.commit()
+    return RedirectResponse(safe_next(next), status_code=303)
+
+
 @app.post("/inbox/seen-all")
 def web_seen_all(next: str = Form("/")):
     with closing(db()) as con:

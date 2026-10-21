@@ -73,6 +73,19 @@ def test_agent_todo_lands_in_inbox_until_seen(client):
     assert "Neue Aufgaben" not in client.get("/").text
 
 
+def test_inbox_item_can_be_marked_finished(client):
+    other = TestClient(app, follow_redirects=False)
+    token = client.post("/admin/tokens", data={"name": "t2"}).text.split('class="token">')[1].split("<")[0]
+    r = other.post("/api/projects/demo-app/todos", json={"text": "Already done thing"},
+                   headers={"Authorization": f"Bearer {token}"})
+    tid = r.json()["id"]
+    assert "Already done thing" in client.get("/").text
+    client.post(f"/t/{tid}/finished", data={"next": "/"})
+    html = client.get("/p/demo-app").text
+    assert "Already done thing" in html
+    assert "Already done thing" not in client.get("/").text.split("Aufgaben nach")[0]
+
+
 def test_cross_origin_post_is_blocked(client):
     r = client.post("/logout", headers={"Origin": "https://evil.example"})
     assert r.status_code == 403

@@ -1,18 +1,21 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="top"><span>{{ site_title() }}</span>
+<div class="top"><span class="brand">{{ site_title() }}</span>
 <nav>{% for s in ('aktiv','pause','archiv') %}<a href="/?status={{ s }}&sort={{ sort }}"{% if s == status %} aria-current="page"{% endif %}>{{ s }}</a>{% endfor %}<a href="/admin">{{ t('admin') }}</a><form class="inline" method="post" action="/logout"><button class="linklike">{{ t('logout') }}</button></form></nav></div>
 <div class="hello"><h1>{{ today }}</h1>
 <p>{{ focus|length }} Aufgaben mit Priorität 1, {{ open_total }} Projekte {{ status }}.</p></div>
 
 {% if inbox or prs %}
-<section class="inbox"><div class="board-head"><h2>Posteingang <small class="hint">{{ inbox|length }} neue Aufgaben von Agenten, {{ prs|length }} offene Pull Requests</small></h2>
-{% if inbox %}<form method="post" action="/inbox/seen-all"><input type="hidden" name="next" value="/"><button class="go ghost">Alle als gesehen markieren</button></form>{% endif %}</div>
+<section class="inbox"><div class="board-head"><div><h2>Posteingang</h2><p class="hint2">{{ inbox|length }} neue Aufgaben von Agenten, {{ prs|length }} offene Pull Requests</p></div>
+{% if inbox %}<form method="post" action="/inbox/seen-all"><input type="hidden" name="next" value="/"><button class="go ghost" title="Alle Aufgaben behalten und aus dem Posteingang nehmen">Alle übernehmen</button></form>{% endif %}</div>
 <div class="inbox-grid">
 {% if inbox %}<div class="sheet"><h3>Neue Aufgaben</h3>
-{% for t in inbox %}<div class="task"><div><a class="proj" href="/p/{{ t.project }}">{{ t.pname }} <time>{{ t.created|fmtdate }}</time></a><span class="txt">{{ t.text|replace('**','') }}</span></div>
-<form method="post" action="/t/{{ t.id }}/seen"><input type="hidden" name="next" value="/"><button class="go ghost" title="Aufgabe behalten, aus dem Posteingang nehmen">Gesehen</button></form>
-<form method="post" action="/t/{{ t.id }}/delete"><input type="hidden" name="next" value="/"><button class="go ghost" title="Aufgabe löschen">Verwerfen</button></form></div>{% endfor %}</div>{% endif %}
+{% for t in inbox %}<div class="task"><div class="grow"><a class="proj" href="/p/{{ t.project }}">{{ t.pname }} <time>{{ t.created|fmtdate }}</time></a><span class="txt">{{ t.text|replace('**','') }}</span>
+<div class="actions">
+<form method="post" action="/t/{{ t.id }}/seen"><input type="hidden" name="next" value="/"><button class="act keep" title="Aufgabe behalten, sie erscheint im Board">Übernehmen</button></form>
+<form method="post" action="/t/{{ t.id }}/finished"><input type="hidden" name="next" value="/"><button class="act fin" title="Schon erledigt: wird als erledigt gespeichert">Bereits erledigt</button></form>
+<form method="post" action="/t/{{ t.id }}/delete"><input type="hidden" name="next" value="/"><button class="act del" title="Aufgabe endgültig löschen">Verwerfen</button></form>
+</div></div></div>{% endfor %}</div>{% endif %}
 {% if prs %}<div class="sheet"><h3>Offene Pull Requests</h3>
 {% for r in prs %}<div class="task"><div><span class="proj">{{ r.repo }} · {{ r.author }} · {{ r.created|fmtdate }}{% if r.draft %} · Entwurf{% endif %}</span><a class="txt" href="{{ r.url }}">{{ r.title }}</a></div></div>{% endfor %}</div>{% endif %}
 </div></section>

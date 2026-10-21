@@ -7,6 +7,8 @@ A small self-hosted dashboard that gives you and your AI agents one shared view 
 - **Inbox** for tasks that agents created since you last looked, plus open pull requests.
 - **Project pages** with tasks, ideas, activity log, branches, latest commits and README excerpt from GitHub.
 - **Notes as project memory**: timestamped notes per project from you or an agent, pinnable. Agents get pinned and recent notes in their briefing. Full-text search across notes, tasks and projects.
+- **Documents per project**: Markdown pages you read and edit right on the project page, with search.
+- **Infrastructure view** (optional): read-only Proxmox integration shows live status and IP per project and lists all containers and VMs, with a switch to hide stopped ones.
 - **Groups** you define yourself (hosting target, client, team...), sortable by recent activity or open tasks, with a collapsed "dormant" group for quiet projects.
 - **Admin area**: settings, projects, API tokens, JSON backup and Markdown import.
 - **Agent API** with revocable tokens. Agents read a project brief and write tasks and log entries.
@@ -63,6 +65,18 @@ curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/js
 ```
 
 Tasks created through the API land in the inbox until you mark them as seen. `GET /export/notes.md` returns all notes as Markdown.
+
+## Proxmox integration (optional)
+
+Create a read-only user and token on your cluster, then enter URL, token ID and secret under **Admin → Settings**:
+
+```bash
+pveum user add dashboard@pve
+pveum acl modify / --users dashboard@pve --roles PVEAuditor
+pveum user token add dashboard@pve awb --privsep 0
+```
+
+Link a project to a guest with its **container or VM number** in the project settings. The dashboard never starts, stops or changes anything.
 
 ## Install on a phone
 

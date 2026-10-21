@@ -30,7 +30,7 @@
 <header><span>{{ 'Agent' if n.author == 'agent' else 'Du' }} · {{ n.created|fmtdate }}{% if n.pinned %} · angepinnt{% endif %}</span>
 <span class="nact"><form class="inline" method="post" action="/n/{{ n.id }}/pin"><button class="linklike" title="Anpinnen oder lösen">{{ 'Lösen' if n.pinned else 'Anpinnen' }}</button></form>
 <form class="inline" method="post" action="/n/{{ n.id }}/delete"><button class="linklike del" title="Notiz löschen">Löschen</button></form></span></header>
-<p>{{ n.text }}</p></article>{% else %}<p class="empty">Noch keine Notizen.</p>{% endfor %}
+<div class="md">{{ n.text|md }}</div></article>{% else %}<p class="empty">Noch keine Notizen.</p>{% endfor %}
 </section>
 <section><h2>Erledigt</h2><div class="sheet">
 {% for t in todos if t.done %}<div class="task t-done"><form method="post" action="/t/{{ t.id }}/toggle"><button class="box checked" aria-label="Wieder öffnen"></button></form>
@@ -48,4 +48,19 @@
 <ul class="log">{% for a in log %}<li><time>{{ a.ts|fmtdate }}</time>{{ a.text }}</li>{% else %}<li class="empty">Noch kein Eintrag.</li>{% endfor %}</ul>
 <form class="add" method="post" action="/p/{{ p.slug }}/log"><input name="text" placeholder="Was wurde gemacht?" required aria-label="Verlaufseintrag"><button class="go">Eintragen</button></form>
 </section></div></div>
+<section class="docs" id="docs"><h2>Dokumente <small class="hint">Notizen und Doku zu diesem Projekt, direkt hier lesen und bearbeiten</small></h2>
+{% for d in docs %}<details class="doc" id="doc-{{ d.id }}"{% if loop.length == 1 %} open{% endif %}>
+<summary><span class="dt">{{ d.title }}</span><span class="dm">{{ d.updated|fmtdate }}</span></summary>
+<div class="docbody"><div class="md">{{ d.body|md }}</div>
+<details class="docedit"><summary>Bearbeiten</summary>
+<form method="post" action="/d/{{ d.id }}/save" class="fgrid wide"><label>Titel<input name="title" value="{{ d.title }}" required></label>
+<label>Text (Markdown)<textarea name="body" rows="18">{{ d.body }}</textarea></label>
+<div class="actions"><button class="act keep">Speichern</button></div></form>
+<form method="post" action="/d/{{ d.id }}/delete" class="inline" onsubmit="return confirm('Dokument löschen?')"><button class="act del">Dokument löschen</button></form></details>
+{% if d.source %}<p class="hint2">Ursprung: {{ d.source }}</p>{% endif %}</div></details>
+{% else %}<p class="empty">Noch keine Dokumente.</p>{% endfor %}
+<details class="doc newdoc"><summary>Neues Dokument</summary>
+<form method="post" action="/p/{{ p.slug }}/docs" class="fgrid wide"><label>Titel<input name="title" required></label>
+<label>Text (Markdown)<textarea name="body" rows="10"></textarea></label><div class="actions"><button class="act keep">Anlegen</button></div></form></details>
+</section>
 {% endblock %}

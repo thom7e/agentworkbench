@@ -67,6 +67,10 @@ def brief(con, slug):
     if p["summary"]:
         out.append(p["summary"])
     notes = con.execute("SELECT * FROM notes WHERE project=? ORDER BY id DESC", (slug,)).fetchall()
+    docs = con.execute("SELECT id,title,updated FROM docs WHERE project=? ORDER BY title", (slug,)).fetchall()
+    if docs:
+        out.append("\n## Documents (read with GET /api/docs/<id>)")
+        out += [f"- #{d['id']} {d['title']} (updated {d['updated']})" for d in docs]
     pinned = [n for n in notes if n["pinned"]]
     recent = [n for n in notes if not n["pinned"]][:5]
     for title, rows in (("Pinned notes", pinned), ("Recent notes", recent)):
@@ -225,10 +229,43 @@ def project_page(request: Request, slug: str):
         notes = con.execute(
             "SELECT * FROM notes WHERE project=? ORDER BY pinned DESC, id DESC", (slug,)
         ).fetchall()
+        docs = con.execute("SELECT * FROM docs WHERE project=? ORDER BY title", (slug,)).fetchall()
     gh = github.repo_detail(p["repo"]) if p["repo"] else None
     return templates.TemplateResponse(
-        request, "project.html", {"p": p, "todos": todos, "log": log, "gh": gh, "notes": notes}
+        request, "project.html", {"p": p, "todos": todos, "log": log, "gh": gh, "notes": notes, "docs": docs}
     )
+
+
+@app.post("/p/{slug}/docs")
+def web_doc_add(slug: str, title: str = Form(...), body: str = Form("")):
+    with closing(db()) as con:
+        project_or_404(con, slug)
+        cur = con.execute("INSERT INTO docs(project,title,body,created,updated) VALUES(?,?,?,?,?)",
+                          (slug, title.strip(), body, now(), now()))
+        con.commit()
+    return RedirectResponse(f"/p/{slug}#doc-{cur.lastrowid}", status_code=303)
+
+
+@app.post("/d/{did}/save")
+def web_doc_save(did: int, title: str = Form(...), body: str = Form("")):
+    with closing(db()) as con:
+        d = con.execute("SELECT * FROM docs WHERE id=?", (did,)).fetchone()
+        if not d:
+            raise HTTPException(404)
+        con.execute("UPDATE docs SET title=?, body=?, updated=? WHERE id=?", (title.strip(), body, now(), did))
+        con.commit()
+    return RedirectResponse(f"/p/{d['project']}#doc-{did}", status_code=303)
+
+
+@app.post("/d/{did}/delete")
+def web_doc_delete(did: int):
+    with closing(db()) as con:
+        d = con.execute("SELECT * FROM docs WHERE id=?", (did,)).fetchone()
+        if not d:
+            raise HTTPException(404)
+        con.execute("DELETE FROM docs WHERE id=?", (did,))
+        con.commit()
+    return RedirectResponse(f"/p/{d['project']}", status_code=303)
 
 
 @app.post("/p/{slug}/notes")
@@ -269,6 +306,9 @@ def search_all(con, q):
         "notes": con.execute(
             "SELECT n.*, p.name AS pname FROM notes n JOIN projects p ON p.slug=n.project "
             "WHERE n.text LIKE ? ORDER BY n.id DESC LIMIT 50", (like,)).fetchall(),
+        "docs": con.execute(
+            "SELECT d.*, p.name AS pname FROM docs d JOIN projects p ON p.slug=d.project "
+            "WHERE d.title LIKE ? OR d.body LIKE ? ORDER BY d.title LIMIT 50", (like, like)).fetchall(),
         "todos": con.execute(
             "SELECT t.*, p.name AS pname FROM todos t JOIN projects p ON p.slug=t.project "
             "WHERE t.text LIKE ? ORDER BY t.done, t.id DESC LIMIT 50", (like,)).fetchall(),
@@ -282,7 +322,7 @@ def search_all(con, q):
 def search(request: Request, q: str = ""):
     q = q.strip()
     with closing(db()) as con:
-        res = search_all(con, q) if q else {"notes": [], "todos": [], "projects": []}
+        res = search_all(con, q) if q else {"notes": [], "docs": [], "todos": [], "projects": []}
     return templates.TemplateResponse(request, "search.html", {"q": q, "res": res})
 
 
@@ -464,6 +504,41 @@ def api_patch_project(slug: str, p: ProjectPatch):
     return {"ok": True}
 
 
+class DocIn(BaseModel):
+    title: str
+    body: str = ""
+    source: str = ""
+
+
+@app.post("/api/projects/{slug}/docs")
+def api_doc_add(slug: str, d: DocIn):
+    with closing(db()) as con:
+        project_or_404(con, slug)
+        cur = con.execute("INSERT INTO docs(project,title,body,source,created,updated) VALUES(?,?,?,?,?,?)",
+                          (slug, d.title.strip(), d.body, d.source, now(), now()))
+        con.commit()
+    return {"id": cur.lastrowid}
+
+
+@app.get("/api/docs/{did}", response_class=PlainTextResponse)
+def api_doc_get(did: int):
+    with closing(db()) as con:
+        d = con.execute("SELECT * FROM docs WHERE id=?", (did,)).fetchone()
+    if not d:
+        raise HTTPException(404)
+    return f"# {d['title']}\n\n{d['body']}"
+
+
+@app.put("/api/docs/{did}")
+def api_doc_put(did: int, d: DocIn):
+    with closing(db()) as con:
+        if not con.execute("SELECT 1 FROM docs WHERE id=?", (did,)).fetchone():
+            raise HTTPException(404)
+        con.execute("UPDATE docs SET title=?, body=?, updated=? WHERE id=?", (d.title.strip(), d.body, now(), did))
+        con.commit()
+    return {"ok": True}
+
+
 class NoteIn(BaseModel):
     text: str
     pinned: bool = False
@@ -484,6 +559,7 @@ def api_search(q: str):
     with closing(db()) as con:
         res = search_all(con, q.strip())
     lines = [f"note #{n['id']} [{n['project']}] {n['created']}: {n['text'][:200]}" for n in res["notes"]]
+    lines += [f"doc #{d['id']} [{d['project']}] {d['title']}" for d in res["docs"]]
     lines += [f"todo #{t['id']} [{t['project']}] {'done' if t['done'] else 'open'}: {t['text'][:200]}"
               for t in res["todos"]]
     lines += [f"project {p['slug']}: {p['name']}" for p in res["projects"]]

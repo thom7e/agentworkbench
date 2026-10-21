@@ -114,6 +114,22 @@ def test_notes_memory_and_search(client):
     assert "use SQLite" in other.get("/export/notes.md", headers=h).text
 
 
+def test_docs_render_edit_and_sanitize(client):
+    token = client.post("/admin/tokens", data={"name": "t5"}).text.split('class="token">')[1].split("<")[0]
+    other = TestClient(app, follow_redirects=False)
+    h = {"Authorization": f"Bearer {token}"}
+    r = other.post("/api/projects/demo-app/docs", json={"title": "Runbook", "body": "# Steps\n\n- one\n\n<script>alert(1)</script>"}, headers=h)
+    did = r.json()["id"]
+    page = client.get("/p/demo-app").text
+    assert "Runbook" in page and "<h1>Steps</h1>" in page and "<script>alert" not in page
+    client.post(f"/d/{did}/save", data={"title": "Runbook v2", "body": "changed text"})
+    assert "Runbook v2" in client.get("/p/demo-app").text
+    assert "changed text" in other.get(f"/api/docs/{did}", headers=h).text
+    assert "Documents" in other.get("/api/projects/demo-app", headers=h).text
+    client.post(f"/d/{did}/delete")
+    assert "Runbook v2" not in client.get("/p/demo-app").text
+
+
 def test_cross_origin_post_is_blocked(client):
     r = client.post("/logout", headers={"Origin": "https://evil.example"})
     assert r.status_code == 403

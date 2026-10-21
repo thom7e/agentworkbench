@@ -2,7 +2,10 @@ import re
 from datetime import datetime
 from urllib.parse import quote
 
+import markdown as _markdown
+import nh3
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 
 import settings
 from db import BASE
@@ -40,6 +43,18 @@ def linked_notes(p):
     return out
 
 
+MD_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6", "p", "ul", "ol", "li", "strong", "em", "code", "pre", "blockquote",
+           "table", "thead", "tbody", "tr", "th", "td", "a", "hr", "br", "del"}
+
+
+def md(text):
+    html = _markdown.markdown(text or "", extensions=["tables", "fenced_code", "sane_lists", "nl2br"])
+    html = html.replace("<li>[ ] ", "<li>\u2610 ").replace("<li>[x] ", "<li>\u2611 ").replace("<li>[X] ", "<li>\u2611 ")
+    clean = nh3.clean(html, tags=MD_TAGS, attributes={"a": {"href"}}, url_schemes={"http", "https", "mailto", "obsidian"})
+    return Markup(clean)
+
+
+templates.env.filters["md"] = md
 templates.env.filters["ago"] = ago
 templates.env.filters["fmtdate"] = lambda ts: ts[5:16].replace("-", ".", 1).replace(" ", ", ") if ts else ""
 templates.env.globals["t"] = t

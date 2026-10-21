@@ -374,6 +374,30 @@ def api_upsert_project(p: ProjectIn):
     return {"ok": True}
 
 
+class ProjectPatch(BaseModel):
+    name: str | None = None
+    status: str | None = None
+    area: str | None = None
+    deploy: str | None = None
+    stack: str | None = None
+    summary: str | None = None
+    vault_note: str | None = None
+    repo: str | None = None
+    wiki: str | None = None
+
+
+@app.patch("/api/projects/{slug}")
+def api_patch_project(slug: str, p: ProjectPatch):
+    fields = p.model_dump(exclude_none=True)
+    with closing(db()) as con:
+        project_or_404(con, slug)
+        if fields:
+            con.execute(f"UPDATE projects SET {','.join(f'{k}=?' for k in fields)} WHERE slug=?",
+                        [*fields.values(), slug])
+            con.commit()
+    return {"ok": True}
+
+
 @app.post("/api/projects/{slug}/todos")
 def api_add(slug: str, t: TodoIn):
     with closing(db()) as con:

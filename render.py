@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from urllib.parse import quote
 
 from fastapi.templating import Jinja2Templates
 
@@ -25,21 +26,25 @@ def ago(ts):
     return f"vor {days} Tagen"
 
 
-def note_url(p):
-    note = p["vault_note"]
-    if not note:
-        return ""
-    if re.match(r"^(https?|obsidian):", note):
-        return note
-    vault = settings.get("obsidian_vault")
-    return f"obsidian://open?vault={vault}&file={note}" if vault else ""
+def notes(p):
+    out = []
+    for line in p["vault_note"].splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        label = line.rstrip("/").rsplit("/", 1)[-1].removesuffix(".md")
+        if re.match(r"^(https?|obsidian):", line):
+            out.append((label if "/" in line else line, line))
+        elif settings.get("obsidian_vault"):
+            out.append((label, f"obsidian://open?vault={settings.get('obsidian_vault')}&file={quote(line)}"))
+    return out
 
 
 templates.env.filters["ago"] = ago
 templates.env.filters["fmtdate"] = lambda ts: ts[5:16].replace("-", ".", 1).replace(" ", ", ") if ts else ""
 templates.env.globals["t"] = t
 templates.env.globals["site_title"] = lambda: settings.get("site_title")
-templates.env.globals["note_url"] = note_url
+templates.env.globals["notes"] = notes
 
 
 def slugify(name):

@@ -86,6 +86,17 @@ def test_inbox_item_can_be_marked_finished(client):
     assert "Already done thing" not in client.get("/").text.split("Aufgaben nach")[0]
 
 
+def test_patch_project_and_multiple_notes(client):
+    token = client.post("/admin/tokens", data={"name": "t3"}).text.split('class="token">')[1].split("<")[0]
+    other = TestClient(app, follow_redirects=False)
+    h = {"Authorization": f"Bearer {token}"}
+    r = other.patch("/api/projects/demo-app", json={"vault_note": "notes/a\nhttps://example.com/b"}, headers=h)
+    assert r.status_code == 200
+    html = client.get("/p/demo-app").text
+    assert "https://example.com/b" in html
+    assert "Demo App" in html
+
+
 def test_cross_origin_post_is_blocked(client):
     r = client.post("/logout", headers={"Origin": "https://evil.example"})
     assert r.status_code == 403

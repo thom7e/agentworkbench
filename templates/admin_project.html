@@ -12,7 +12,7 @@
 <label>{{ t('proj.repo') }}<input name="repo" value="{{ p.repo }}" list="repos" autocomplete="off"></label>
 <datalist id="repos">{% for r in repos %}<option value="{{ r }}">{% endfor %}</datalist>
 <label>{{ t('proj.wiki') }}<input name="wiki" value="{{ p.wiki }}"></label>
-<label>{{ t('proj.notes') }}<input name="vault_note" value="{{ p.vault_note }}"></label>
+<label>{{ t('proj.notes') }}<textarea name="vault_note" rows="3">{{ p.vault_note }}</textarea><small>{{ t('proj.notes.help') }}</small></label>
 <div><button class="go">{{ t('save') }}</button> <a href="/admin/projects">{{ t('cancel') }}</a></div>
 </form>
 {% if not is_new %}

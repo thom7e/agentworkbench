@@ -55,9 +55,9 @@ curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/jso
 ```
 
 ```bash
-curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"      -d '{"text": "Decided: SQLite is enough, no Postgres", "pinned": true}' https://your-host/api/projects/my-project/notes
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \n     -d '{"text": "Decided: SQLite is enough, no Postgres", "pinned": true}' https://your-host/api/projects/my-project/notes
 curl -H "Authorization: Bearer $TOKEN" "https://your-host/api/search?q=sqlite"
-curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"      -d '{"status": "pause"}' https://your-host/api/projects/my-project
+curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \n     -d '{"status": "pause"}' https://your-host/api/projects/my-project
 ```
 
 Tasks created through the API land in the inbox until you mark them as seen. `GET /export/notes.md` returns all notes as Markdown.

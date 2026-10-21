@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ p.name }}{% endblock %}
+{% block body %}
+<div class="top"><a href="/">← {{ site_title() }}</a></div>
+<div class="phead"><h1>{{ p.name }}</h1>
+<div class="facts">
+<form class="inline" method="post" action="/p/{{ p.slug }}/status"><select name="status" aria-label="Status" onchange="this.form.submit()">{% for s in ('aktiv','pause','archiv') %}<option{% if s == p.status %} selected{% endif %}>{{ s }}</option>{% endfor %}</select></form>{% if p.deploy %}<span>{{ p.deploy }}</span>{% endif %}{% if p.stack %}<span>{{ p.stack }}</span>{% endif %}
+{% if p.repo %}<a href="https://github.com/{{ p.repo }}">{{ p.repo }}</a>{% endif %}{% if p.wiki %}<a href="{{ p.wiki }}">Wiki</a>{% endif %}
+{% if note_url(p) %}<a href="{{ note_url(p) }}">Notiz</a>{% endif %}<a href="/admin/projects/{{ p.slug }}">bearbeiten</a></div>
+{% if p.summary %}<p class="lead">{{ p.summary }}</p>{% endif %}</div>
+
+<div class="cols"><div>
+{% for kind, title in (('todo','Offen'),('idee','Ideen')) %}
+<section><h2>{{ title }}</h2><div class="sheet">
+{% for t in todos if t.kind == kind and not t.done %}
+<div class="task{{ ' urgent' if t.prio == 1 }}"><form method="post" action="/t/{{ t.id }}/toggle"><button class="box" aria-label="Erledigt"></button></form>
+<span class="txt">{% if t.prio == 1 %}<span class="prio">dringend</span>{% endif %}{{ t.text|replace('**','') }}</span></div>
+{% else %}<p class="empty">{{ 'Nichts offen.' if kind == 'todo' else 'Noch keine Ideen.' }}</p>{% endfor %}
+</div></section>{% endfor %}
+<form class="add" method="post" action="/p/{{ p.slug }}/add">
+<input name="text" placeholder="Neue Aufgabe oder Idee" required aria-label="Text">
+<select name="kind" aria-label="Art"><option value="todo">Aufgabe</option><option value="idee">Idee</option></select>
+<select name="prio" aria-label="Priorität"><option value="1">dringend</option><option value="2" selected>normal</option><option value="3">irgendwann</option></select>
+<button class="go">Hinzufügen</button></form>
+<section><h2>Erledigt</h2><div class="sheet">
+{% for t in todos if t.done %}<div class="task t-done"><form method="post" action="/t/{{ t.id }}/toggle"><button class="box checked" aria-label="Wieder öffnen"></button></form>
+<div><span class="txt">{{ t.text|replace('**','') }}</span><time>{{ t.done_at|fmtdate }}</time></div></div>
+{% else %}<p class="empty">Noch nichts erledigt.</p>{% endfor %}
+</div></section></div>
+
+<div>
+{% if gh %}<section><h2>Git</h2>
+{% if gh.readme or gh.description %}<p class="readme">{{ gh.readme or gh.description }}</p>{% endif %}
+<p class="branches">Branches: {% for b in gh.branches %}<span class="br{{ ' main' if b == gh.default_branch }}">{{ b }}</span>{% endfor %}</p>
+<ul class="commits">{% for c in gh.commits %}<li><a href="{{ c.url }}"><code>{{ c.sha }}</code> {{ c.msg|truncate(90) }}</a><time>{{ c.date }}</time></li>{% endfor %}</ul>
+</section>{% endif %}
+<section><h2>Verlauf</h2>
+<ul class="log">{% for a in log %}<li><time>{{ a.ts|fmtdate }}</time>{{ a.text }}</li>{% else %}<li class="empty">Noch kein Eintrag.</li>{% endfor %}</ul>
+<form class="add" method="post" action="/p/{{ p.slug }}/log"><input name="text" placeholder="Was wurde gemacht?" required aria-label="Verlaufseintrag"><button class="go">Eintragen</button></form>
+</section></div></div>
+{% endblock %}

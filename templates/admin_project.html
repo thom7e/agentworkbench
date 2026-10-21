@@ -1,0 +1,23 @@
+{% extends "admin_base.html" %}
+{% block admin %}
+<form class="fgrid" method="post" action="/admin/projects">
+<input type="hidden" name="original" value="{{ '' if is_new else p.slug }}">
+<label>{{ t('proj.name') }}<input name="name" value="{{ p.name }}" required></label>
+{% if is_new %}<label>{{ t('proj.slug') }}<input name="slug" value="" pattern="[a-z0-9-]*"></label>{% endif %}
+<label>{{ t('proj.status') }}<select name="status">{% for s in statuses %}<option{% if s == p.status %} selected{% endif %}>{{ s }}</option>{% endfor %}</select></label>
+<label>{{ t('proj.area') }}<select name="area"><option value="">–</option>{% for a in areas %}<option{% if a == p.area %} selected{% endif %}>{{ a }}</option>{% endfor %}</select></label>
+<label>{{ t('proj.deploy') }}<input name="deploy" value="{{ p.deploy }}"></label>
+<label>{{ t('proj.stack') }}<input name="stack" value="{{ p.stack }}"></label>
+<label>{{ t('proj.summary') }}<textarea name="summary" rows="3">{{ p.summary }}</textarea></label>
+<label>{{ t('proj.repo') }}<input name="repo" value="{{ p.repo }}" list="repos" autocomplete="off"></label>
+<datalist id="repos">{% for r in repos %}<option value="{{ r }}">{% endfor %}</datalist>
+<label>{{ t('proj.wiki') }}<input name="wiki" value="{{ p.wiki }}"></label>
+<label>{{ t('proj.notes') }}<input name="vault_note" value="{{ p.vault_note }}"></label>
+<div><button class="go">{{ t('save') }}</button> <a href="/admin/projects">{{ t('cancel') }}</a></div>
+</form>
+{% if not is_new %}
+<form class="fgrid danger" method="post" action="/admin/projects/{{ p.slug }}/delete">
+<label class="check"><input type="checkbox" name="confirm" value="1" required> {{ t('proj.delete.confirm') }}</label>
+<div><button class="go ghost">{{ t('delete') }}</button></div></form>
+{% endif %}
+{% endblock %}

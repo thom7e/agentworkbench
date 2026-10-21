@@ -1,0 +1,13 @@
+{% extends "admin_base.html" %}
+{% block admin %}
+{% if imported %}<p class="notice">{{ t('data.import.done', p=imported[0], t=imported[1]) }}</p>{% endif %}
+<h2>{{ t('data.export') }}</h2>
+<p><a class="go linkbtn" href="/admin/export.json">{{ t('data.export.json') }}</a></p>
+<h2>{{ t('data.import') }}</h2>
+<form class="fgrid" method="post" action="/admin/import.json" enctype="multipart/form-data">
+<label>{{ t('data.import.json') }}<input type="file" name="file" accept="application/json" required></label>
+<div><button class="go">{{ t('data.import.go') }}</button></div></form>
+<form class="fgrid" method="post" action="/admin/import.md">
+<label>{{ t('data.import.md') }}<textarea name="markdown" rows="8" placeholder="## Project&#10;- [ ] Task" required></textarea><small>{{ t('data.import.md.help') }}</small></label>
+<div><button class="go">{{ t('data.import.go') }}</button></div></form>
+{% endblock %}

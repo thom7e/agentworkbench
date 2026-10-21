@@ -1,0 +1,11 @@
+{% extends "admin_base.html" %}
+{% block admin %}
+<p class="lead">{{ t('tok.help') }}</p>
+{% if new %}<div class="notice">{{ t('tok.created') }}<br><code class="token">{{ new }}</code></div>{% endif %}
+<form class="add" method="post" action="/admin/tokens"><input name="name" placeholder="{{ t('tok.name') }}" required><button class="go">{{ t('tok.create') }}</button></form>
+<div class="rows">
+{% for r in rows %}
+<div class="row arow"><span class="name">{{ r.name }}</span><span class="next">{{ t('tok.last') }}: {{ r.last_used or t('tok.never') }}</span><span></span>
+<form method="post" action="/admin/tokens/{{ r.id }}/revoke"><button class="go ghost">{{ t('tok.revoke') }}</button></form></div>
+{% endfor %}</div>
+{% endblock %}

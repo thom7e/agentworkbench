@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><span>{{ site_title() }}</span>
+<nav>{% for s in ('aktiv','pause','archiv') %}<a href="/?status={{ s }}&sort={{ sort }}"{% if s == status %} aria-current="page"{% endif %}>{{ s }}</a>{% endfor %}<a href="/admin">{{ t('admin') }}</a><form class="inline" method="post" action="/logout"><button class="linklike">{{ t('logout') }}</button></form></nav></div>
+<div class="hello"><h1>{{ today }}</h1>
+<p>{{ focus|length }} Aufgaben mit Priorität 1, {{ open_total }} Projekte {{ status }}.</p></div>
+
+{% if inbox or prs %}
+<section class="inbox"><div class="board-head"><h2>Posteingang <small class="hint">{{ inbox|length }} neue Aufgaben von Agenten, {{ prs|length }} offene Pull Requests</small></h2>
+{% if inbox %}<form method="post" action="/inbox/seen-all"><input type="hidden" name="next" value="/"><button class="go ghost">Alle als gesehen markieren</button></form>{% endif %}</div>
+<div class="inbox-grid">
+{% if inbox %}<div class="sheet"><h3>Neue Aufgaben</h3>
+{% for t in inbox %}<div class="task"><div><a class="proj" href="/p/{{ t.project }}">{{ t.pname }} <time>{{ t.created|fmtdate }}</time></a><span class="txt">{{ t.text|replace('**','') }}</span></div>
+<form method="post" action="/t/{{ t.id }}/seen"><input type="hidden" name="next" value="/"><button class="go ghost" title="Aufgabe behalten, aus dem Posteingang nehmen">Gesehen</button></form>
+<form method="post" action="/t/{{ t.id }}/delete"><input type="hidden" name="next" value="/"><button class="go ghost" title="Aufgabe löschen">Verwerfen</button></form></div>{% endfor %}</div>{% endif %}
+{% if prs %}<div class="sheet"><h3>Offene Pull Requests</h3>
+{% for r in prs %}<div class="task"><div><span class="proj">{{ r.repo }} · {{ r.author }} · {{ r.created|fmtdate }}{% if r.draft %} · Entwurf{% endif %}</span><a class="txt" href="{{ r.url }}">{{ r.title }}</a></div></div>{% endfor %}</div>{% endif %}
+</div></section>
+{% endif %}
+
+<section class="board-wrap"><div class="board-head"><h2>Aufgaben nach Priorität <small class="hint">Karte ziehen, um die Priorität zu ändern</small></h2>
+<select id="pfilter" aria-label="Nach Projekt filtern"><option value="">Alle Projekte</option>
+{% for name in board_projects %}<option>{{ name }}</option>{% endfor %}</select></div>
+<div class="board">
+{% for pr, title in ((1,'Dringend'),(2,'Normal'),(3,'Irgendwann')) %}
+<div class="col p{{ pr }}" data-prio="{{ pr }}"><h3>{{ title }} <span>{{ board[pr]|length }}</span></h3>
+<div class="drop">
+{% for t in board[pr] %}
+<article class="card" draggable="true" data-id="{{ t.id }}" data-project="{{ t.pname }}">
+<form method="post" action="/t/{{ t.id }}/toggle"><input type="hidden" name="next" value="/"><button class="box" title="Als erledigt markieren" aria-label="Erledigt"></button></form>
+<div><a href="/p/{{ t.project }}" class="cp">{{ t.pname }}</a>
+<p>{{ t.text|replace('**','')|truncate(140) }}</p>
+<form class="moves" method="post" action="/t/{{ t.id }}/prio"><input type="hidden" name="next" value="/">{% for n in (1,2,3) %}<button name="prio" value="{{ n }}"{% if n == t.prio %} class="on" disabled{% endif %}>{{ n }}</button>{% endfor %}</form></div>
+</article>{% endfor %}
+</div></div>{% endfor %}
+</div></section>
+
+{% if status == 'aktiv' %}
+<div class="today">
+<section><h2>Heute zuerst</h2>
+<div class="sheet">
+{% for t in focus %}
+<div class="task urgent"><form method="post" action="/t/{{ t.id }}/toggle"><input type="hidden" name="next" value="/"><button class="box" title="Als erledigt markieren" aria-label="Erledigt"></button></form>
+<div><a class="proj" href="/p/{{ t.project }}">{{ t.pname }}</a><span class="txt">{{ t.text|replace('**','') }}</span></div></div>
+{% else %}<p class="empty">Keine dringenden Aufgaben. Gute Gelegenheit für eine Idee.</p>{% endfor %}
+</div></section>
+<section><h2>Zuletzt gearbeitet</h2>
+<ul class="log">{% for a in recent %}<li><time>{{ a.ts|fmtdate }}</time><a href="/p/{{ a.project }}"><b>{{ a.pname }}</b></a> {{ a.text }}</li>
+{% else %}<li class="empty">Noch nichts eingetragen.</li>{% endfor %}</ul></section>
+</div>
+{% endif %}
+
+<div class="sortbar">Projekte sortieren nach
+<a data-keep href="/?status={{ status }}&sort=aktuell"{% if sort != 'offen' %} aria-current="true"{% endif %}>Aktualität</a>
+<a data-keep href="/?status={{ status }}&sort=offen"{% if sort == 'offen' %} aria-current="true"{% endif %}>offenen Punkten</a></div>
+{% for area, items in groups.items() if items %}
+<section class="area"><h2>{{ area }} <small>{{ items|length }} Projekte</small></h2>
+<div class="rows">
+{% for p, top, p1, last in items %}
+<a class="row" href="/p/{{ p.slug }}">
+<span class="name">{{ p.name }}</span>
+<span class="next">{% if top %}{{ top.text|replace('**','') }}{% else %}–{% endif %}</span>
+<span class="count">{% if p1 %}<b>{{ p1 }} dringend</b>, {% endif %}{{ p.open_n }} offen</span>
+<span class="age">{{ last|ago }}</span>
+</a>{% endfor %}
+</div></section>
+{% endfor %}
+{% if dormant %}
+<details class="area dormant"><summary><h2>Ruhend <small>{{ dormant|length }} Projekte ohne offene Aufgaben und seit über {{ dormant_days }} Tagen ohne Änderung</small></h2></summary>
+<div class="rows">
+{% for p, top, p1, last in dormant %}
+<a class="row" href="/p/{{ p.slug }}"><span class="name">{{ p.name }}</span><span class="next">{{ p.deploy or p.stack }}</span><span class="count">0 offen</span><span class="age">{{ last|ago }}</span></a>
+{% endfor %}</div></details>
+{% endif %}
+<script>
+(function(){
+  var sel=document.getElementById('pfilter');
+  function apply(){
+    var v=sel.value;
+    document.querySelectorAll('.col').forEach(function(col){
+      var n=0;
+      col.querySelectorAll('.card').forEach(function(c){
+        var show=!v||c.dataset.project===v;
+        c.hidden=!show;if(show)n++;
+      });
+      col.querySelector('h3 span').textContent=n;
+    });
+    try{localStorage.setItem('pfilter',v)}catch(e){}
+  }
+  try{var s=localStorage.getItem('pfilter');if(s&&Array.from(sel.options).some(function(o){return o.value===s}))sel.value=s}catch(e){}
+  sel.addEventListener('change',apply);apply();
+})();
+(function(){
+  var dragged=null;
+  document.querySelectorAll('.card').forEach(function(c){
+    c.addEventListener('dragstart',function(e){dragged=c;c.classList.add('drag');e.dataTransfer.effectAllowed='move'});
+    c.addEventListener('dragend',function(){c.classList.remove('drag');document.querySelectorAll('.col').forEach(function(x){x.classList.remove('over')})});
+  });
+  document.querySelectorAll('.col').forEach(function(col){
+    col.addEventListener('dragover',function(e){e.preventDefault();col.classList.add('over')});
+    col.addEventListener('dragleave',function(e){if(!col.contains(e.relatedTarget))col.classList.remove('over')});
+    col.addEventListener('drop',function(e){
+      e.preventDefault();col.classList.remove('over');
+      if(!dragged)return;
+      var prio=col.dataset.prio,card=dragged;
+      fetch('/t/'+card.dataset.id+'/prio',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'prio='+prio})
+        .then(function(r){if(r.ok){window.keepScroll();location.reload()}});
+    });
+  });
+})();
+</script>
+{% endblock %}

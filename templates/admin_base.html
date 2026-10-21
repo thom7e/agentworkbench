@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ t('admin') }} · {{ site_title() }}{% endblock %}
+{% block body %}
+<div class="top"><a href="/">← {{ t('back') }}</a>
+<nav>{% for key, label in (('settings','admin.settings'),('projects','admin.projects'),('tokens','admin.tokens'),('data','admin.data')) %}<a href="/admin/{{ key }}"{% if tab == key %} aria-current="page"{% endif %}>{{ t(label) }}</a>{% endfor %}</nav></div>
+<div class="hello"><h1>{{ t('admin') }}</h1></div>
+{% if msg %}<p class="notice">{{ t(msg) }}</p>{% endif %}
+{% block admin %}{% endblock %}
+{% endblock %}

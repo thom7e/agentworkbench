@@ -1,0 +1,10 @@
+{% extends "admin_base.html" %}
+{% block admin %}
+<p><a class="go linkbtn" href="/admin/projects/new">{{ t('proj.new') }}</a></p>
+{% if rows %}
+<div class="rows">
+{% for p in rows %}
+<a class="row arow" href="/admin/projects/{{ p.slug }}"><span class="name">{{ p.name }}</span><span class="next">{{ p.area or '–' }}{% if p.repo %} · {{ p.repo }}{% endif %}</span><span class="count">{{ p.open_n }}</span><span class="age">{{ p.status }}</span></a>
+{% endfor %}</div>
+{% else %}<p class="empty">{{ t('proj.empty') }}</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Suche · {{ site_title() }}{% endblock %}
+{% block body %}
+<div class="top"><a href="/">← {{ site_title() }}</a></div>
+<div class="hello"><h1>Suche</h1>
+<form class="searchbox" method="get" action="/search"><input type="search" name="q" value="{{ q }}" placeholder="Suchbegriff" aria-label="Suche" autofocus></form></div>
+{% if q %}
+{% if res.projects %}<section class="area"><h2>Projekte <small>{{ res.projects|length }}</small></h2><div class="rows">
+{% for p in res.projects %}<a class="row arow" href="/p/{{ p.slug }}"><span class="name">{{ p.name }}</span><span class="next">{{ p.summary }}</span><span></span><span class="age">{{ p.status }}</span></a>{% endfor %}</div></section>{% endif %}
+{% if res.notes %}<section class="area"><h2>Notizen <small>{{ res.notes|length }}</small></h2>
+{% for n in res.notes %}<article class="note{{ ' pinned' if n.pinned }}"><header><a href="/p/{{ n.project }}"><b>{{ n.pname }}</b></a><span>{{ n.created|fmtdate }}</span></header><p>{{ n.text }}</p></article>{% endfor %}</section>{% endif %}
+{% if res.todos %}<section class="area"><h2>Aufgaben <small>{{ res.todos|length }}</small></h2><div class="sheet">
+{% for t in res.todos %}<div class="task{{ ' t-done' if t.done }}"><div><a class="proj" href="/p/{{ t.project }}">{{ t.pname }}{% if t.done %} · erledigt{% endif %}</a><span class="txt">{{ t.text|replace('**','') }}</span></div></div>{% endfor %}</div></section>{% endif %}
+{% if not (res.projects or res.notes or res.todos) %}<p class="empty">Nichts gefunden für „{{ q }}“.</p>{% endif %}
+{% endif %}
+{% endblock %}

@@ -164,7 +164,7 @@ def data_page(request: Request, p: int = -1, tasks: int = -1):
 def export_json():
     with closing(db()) as con:
         data = {name: [dict(r) for r in con.execute(f"SELECT * FROM {name}")]
-                for name in ("projects", "todos", "activity")}
+                for name in ("projects", "todos", "activity", "notes")}
     return Response(json.dumps(data, ensure_ascii=False, indent=2), media_type="application/json",
                     headers={"Content-Disposition": 'attachment; filename="backup.json"'})
 
@@ -189,6 +189,9 @@ async def import_json(file: UploadFile = File(...)):
                         [t[c] for c in cols])
         for a in activity:
             con.execute("INSERT INTO activity(project,text,ts) VALUES(?,?,?)", (a["project"], a["text"], a["ts"]))
+        for n in data.get("notes", []):
+            con.execute("INSERT INTO notes(project,text,author,pinned,created) VALUES(?,?,?,?,?)",
+                        (n["project"], n["text"], n.get("author", "user"), n.get("pinned", 0), n["created"]))
         con.commit()
     return back(f"/admin/data?p={len(projects)}&tasks={len(todos)}")
 

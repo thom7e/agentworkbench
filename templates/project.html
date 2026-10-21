@@ -6,7 +6,7 @@
 <div class="facts">
 <form class="inline" method="post" action="/p/{{ p.slug }}/status"><select name="status" aria-label="Status" onchange="this.form.submit()">{% for s in ('aktiv','pause','archiv') %}<option{% if s == p.status %} selected{% endif %}>{{ s }}</option>{% endfor %}</select></form>{% if p.deploy %}<span>{{ p.deploy }}</span>{% endif %}{% if p.stack %}<span>{{ p.stack }}</span>{% endif %}
 {% if p.repo %}<a href="https://github.com/{{ p.repo }}">{{ p.repo }}</a>{% endif %}{% if p.wiki %}<a href="{{ p.wiki }}">Wiki</a>{% endif %}
-{% for label, url in notes(p) %}<a href="{{ url }}">{{ label }}</a>{% endfor %}<a href="/admin/projects/{{ p.slug }}">bearbeiten</a></div>
+{% for label, url in linked_notes(p) %}<a href="{{ url }}">{{ label }}</a>{% endfor %}<a href="/admin/projects/{{ p.slug }}">bearbeiten</a></div>
 {% if p.summary %}<p class="lead">{{ p.summary }}</p>{% endif %}</div>
 
 <div class="cols"><div>
@@ -22,6 +22,16 @@
 <select name="kind" aria-label="Art"><option value="todo">Aufgabe</option><option value="idee">Idee</option></select>
 <select name="prio" aria-label="Priorität"><option value="1">dringend</option><option value="2" selected>normal</option><option value="3">irgendwann</option></select>
 <button class="go">Hinzufügen</button></form>
+<section><h2>Notizen <small class="hint">Wissen und Entscheidungen zu diesem Projekt</small></h2>
+<form class="add notesadd" method="post" action="/p/{{ p.slug }}/notes">
+<textarea name="text" rows="3" placeholder="Was sollte man später noch wissen?" required aria-label="Notiz"></textarea>
+<label class="check"><input type="checkbox" name="pinned" value="1"> Anpinnen</label><button class="go">Notiz speichern</button></form>
+{% for n in notes %}<article class="note{{ ' pinned' if n.pinned }}">
+<header><span>{{ 'Agent' if n.author == 'agent' else 'Du' }} · {{ n.created|fmtdate }}{% if n.pinned %} · angepinnt{% endif %}</span>
+<span class="nact"><form class="inline" method="post" action="/n/{{ n.id }}/pin"><button class="linklike" title="Anpinnen oder lösen">{{ 'Lösen' if n.pinned else 'Anpinnen' }}</button></form>
+<form class="inline" method="post" action="/n/{{ n.id }}/delete"><button class="linklike del" title="Notiz löschen">Löschen</button></form></span></header>
+<p>{{ n.text }}</p></article>{% else %}<p class="empty">Noch keine Notizen.</p>{% endfor %}
+</section>
 <section><h2>Erledigt</h2><div class="sheet">
 {% for t in todos if t.done %}<div class="task t-done"><form method="post" action="/t/{{ t.id }}/toggle"><button class="box checked" aria-label="Wieder öffnen"></button></form>
 <div><span class="txt">{{ t.text|replace('**','') }}</span><time>{{ t.done_at|fmtdate }}</time></div></div>

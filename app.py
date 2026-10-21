@@ -61,11 +61,19 @@ def brief(con, slug):
     ).fetchall()
     out = [f"# {p['name']} ({p['slug']}) — {p['status']}"]
     for k, label in (("deploy", "Deploy"), ("stack", "Stack"), ("repo", "Repo"),
-                     ("vault_note", "Notes"), ("wiki", "Wiki")):
+                     ("vault_note", "Linked notes"), ("wiki", "Wiki")):
         if p[k]:
-            out.append(f"{label}: {p[k]}")
+            out.append(f"{label}: {', '.join(p[k].splitlines())}")
     if p["summary"]:
         out.append(p["summary"])
+    notes = con.execute("SELECT * FROM notes WHERE project=? ORDER BY id DESC", (slug,)).fetchall()
+    pinned = [n for n in notes if n["pinned"]]
+    recent = [n for n in notes if not n["pinned"]][:5]
+    for title, rows in (("Pinned notes", pinned), ("Recent notes", recent)):
+        if rows:
+            out.append(f"\n## {title}")
+            for n in rows:
+                out.append(f"### #{n['id']} {n['created']} ({n['author']})\n{n['text']}")
     for kind, title in (("todo", "Open"), ("idee", "Ideas")):
         rows = [t for t in todos if not t["done"] and t["kind"] == kind]
         out.append(f"\n## {title}")
@@ -214,10 +222,68 @@ def project_page(request: Request, slug: str):
         log = con.execute(
             "SELECT * FROM activity WHERE project=? ORDER BY id DESC LIMIT 20", (slug,)
         ).fetchall()
+        notes = con.execute(
+            "SELECT * FROM notes WHERE project=? ORDER BY pinned DESC, id DESC", (slug,)
+        ).fetchall()
     gh = github.repo_detail(p["repo"]) if p["repo"] else None
     return templates.TemplateResponse(
-        request, "project.html", {"p": p, "todos": todos, "log": log, "gh": gh}
+        request, "project.html", {"p": p, "todos": todos, "log": log, "gh": gh, "notes": notes}
     )
+
+
+@app.post("/p/{slug}/notes")
+def web_note_add(slug: str, text: str = Form(...), pinned: str = Form("")):
+    with closing(db()) as con:
+        project_or_404(con, slug)
+        con.execute("INSERT INTO notes(project,text,author,pinned,created) VALUES(?,?,'user',?,?)",
+                    (slug, text.strip(), 1 if pinned else 0, now()))
+        con.commit()
+    return RedirectResponse(f"/p/{slug}", status_code=303)
+
+
+@app.post("/n/{nid}/pin")
+def web_note_pin(nid: int):
+    with closing(db()) as con:
+        n = con.execute("SELECT * FROM notes WHERE id=?", (nid,)).fetchone()
+        if not n:
+            raise HTTPException(404)
+        con.execute("UPDATE notes SET pinned=? WHERE id=?", (0 if n["pinned"] else 1, nid))
+        con.commit()
+    return RedirectResponse(f"/p/{n['project']}", status_code=303)
+
+
+@app.post("/n/{nid}/delete")
+def web_note_delete(nid: int):
+    with closing(db()) as con:
+        n = con.execute("SELECT * FROM notes WHERE id=?", (nid,)).fetchone()
+        if not n:
+            raise HTTPException(404)
+        con.execute("DELETE FROM notes WHERE id=?", (nid,))
+        con.commit()
+    return RedirectResponse(f"/p/{n['project']}", status_code=303)
+
+
+def search_all(con, q):
+    like = f"%{q}%"
+    return {
+        "notes": con.execute(
+            "SELECT n.*, p.name AS pname FROM notes n JOIN projects p ON p.slug=n.project "
+            "WHERE n.text LIKE ? ORDER BY n.id DESC LIMIT 50", (like,)).fetchall(),
+        "todos": con.execute(
+            "SELECT t.*, p.name AS pname FROM todos t JOIN projects p ON p.slug=t.project "
+            "WHERE t.text LIKE ? ORDER BY t.done, t.id DESC LIMIT 50", (like,)).fetchall(),
+        "projects": con.execute(
+            "SELECT * FROM projects WHERE name LIKE ? OR summary LIKE ? OR slug LIKE ? ORDER BY name",
+            (like, like, like)).fetchall(),
+    }
+
+
+@app.get("/search", response_class=HTMLResponse)
+def search(request: Request, q: str = ""):
+    q = q.strip()
+    with closing(db()) as con:
+        res = search_all(con, q) if q else {"notes": [], "todos": [], "projects": []}
+    return templates.TemplateResponse(request, "search.html", {"q": q, "res": res})
 
 
 @app.post("/p/{slug}/add")
@@ -398,6 +464,32 @@ def api_patch_project(slug: str, p: ProjectPatch):
     return {"ok": True}
 
 
+class NoteIn(BaseModel):
+    text: str
+    pinned: bool = False
+
+
+@app.post("/api/projects/{slug}/notes")
+def api_note_add(slug: str, n: NoteIn):
+    with closing(db()) as con:
+        project_or_404(con, slug)
+        cur = con.execute("INSERT INTO notes(project,text,author,pinned,created) VALUES(?,?,'agent',?,?)",
+                          (slug, n.text.strip(), int(n.pinned), now()))
+        con.commit()
+    return {"id": cur.lastrowid}
+
+
+@app.get("/api/search", response_class=PlainTextResponse)
+def api_search(q: str):
+    with closing(db()) as con:
+        res = search_all(con, q.strip())
+    lines = [f"note #{n['id']} [{n['project']}] {n['created']}: {n['text'][:200]}" for n in res["notes"]]
+    lines += [f"todo #{t['id']} [{t['project']}] {'done' if t['done'] else 'open'}: {t['text'][:200]}"
+              for t in res["todos"]]
+    lines += [f"project {p['slug']}: {p['name']}" for p in res["projects"]]
+    return "\n".join(lines) or "no results"
+
+
 @app.post("/api/projects/{slug}/todos")
 def api_add(slug: str, t: TodoIn):
     with closing(db()) as con:
@@ -430,6 +522,21 @@ def api_log(slug: str, e: LogIn):
         con.execute("INSERT INTO activity(project,text,ts) VALUES(?,?,?)", (slug, e.text, now()))
         con.commit()
     return {"ok": True}
+
+
+@app.get("/export/notes.md", response_class=PlainTextResponse)
+def export_notes_md():
+    with closing(db()) as con:
+        rows = con.execute(
+            "SELECT n.*, p.name AS pname FROM notes n JOIN projects p ON p.slug=n.project "
+            "ORDER BY p.name, n.pinned DESC, n.id DESC").fetchall()
+    out, current = ["# Notes (generated)\n"], None
+    for n in rows:
+        if n["pname"] != current:
+            current = n["pname"]
+            out.append(f"\n## {current}\n")
+        out.append(f"### {n['created']} ({n['author']}){' [pinned]' if n['pinned'] else ''}\n\n{n['text']}\n")
+    return "\n".join(out)
 
 
 @app.get("/export/todo.md", response_class=PlainTextResponse)

@@ -97,6 +97,23 @@ def test_patch_project_and_multiple_notes(client):
     assert "Demo App" in html
 
 
+def test_notes_memory_and_search(client):
+    token = client.post("/admin/tokens", data={"name": "t4"}).text.split('class="token">')[1].split("<")[0]
+    other = TestClient(app, follow_redirects=False)
+    h = {"Authorization": f"Bearer {token}"}
+    r = other.post("/api/projects/demo-app/notes", json={"text": "Decided: use SQLite, not Postgres", "pinned": True}, headers=h)
+    assert r.status_code == 200
+    other.post("/api/projects/demo-app/notes", json={"text": "Older detail about caching"}, headers=h)
+    brief = other.get("/api/projects/demo-app", headers=h).text
+    assert "## Pinned notes" in brief and "use SQLite" in brief and "caching" in brief
+    client.post("/p/demo-app/notes", data={"text": "Own note from the UI"})
+    page = client.get("/p/demo-app").text
+    assert "Own note from the UI" in page and "angepinnt" in page
+    assert "SQLite" in client.get("/search?q=SQLite").text
+    assert "SQLite" in other.get("/api/search?q=SQLite", headers=h).text
+    assert "use SQLite" in other.get("/export/notes.md", headers=h).text
+
+
 def test_cross_origin_post_is_blocked(client):
     r = client.post("/logout", headers={"Origin": "https://evil.example"})
     assert r.status_code == 403

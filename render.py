@@ -26,7 +26,7 @@ def ago(ts):
     return f"vor {days} Tagen"
 
 
-def notes(p):
+def linked_notes(p):
     out = []
     for line in p["vault_note"].splitlines():
         line = line.strip()
@@ -44,7 +44,7 @@ templates.env.filters["ago"] = ago
 templates.env.filters["fmtdate"] = lambda ts: ts[5:16].replace("-", ".", 1).replace(" ", ", ") if ts else ""
 templates.env.globals["t"] = t
 templates.env.globals["site_title"] = lambda: settings.get("site_title")
-templates.env.globals["notes"] = notes
+templates.env.globals["linked_notes"] = linked_notes
 
 
 def slugify(name):

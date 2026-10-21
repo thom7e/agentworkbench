@@ -182,3 +182,14 @@ button.act.keep{color:var(--accent);border-color:var(--accent)}
 button.act.fin{color:var(--ok);border-color:var(--ok)}
 button.act.del{color:var(--urgent);border-color:var(--urgent)}
 button.act:hover{background:var(--hover)}
+
+.notesadd{align-items:flex-start;margin:8px 0 14px}
+.notesadd textarea{flex:1 1 100%}
+.notesadd .check{display:flex;gap:6px;align-items:center;font-size:15px}
+.note{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:4px;padding:10px 14px;margin-bottom:10px}
+.note.pinned{border-left-color:var(--accent)}
+.note header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--mut);font-size:14px}
+.note p{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.nact{display:flex;gap:14px}.nact button.linklike{margin-left:0;font-size:14px}
+.nact .del:hover{color:var(--urgent)}
+.searchbox{margin:12px 0 0;max-width:520px}.searchbox input{width:100%}

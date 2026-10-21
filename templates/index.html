@@ -3,6 +3,7 @@
 <div class="top"><span class="brand">{{ site_title() }}</span>
 <nav>{% for s in ('aktiv','pause','archiv') %}<a href="/?status={{ s }}&sort={{ sort }}"{% if s == status %} aria-current="page"{% endif %}>{{ s }}</a>{% endfor %}<a href="/admin">{{ t('admin') }}</a><form class="inline" method="post" action="/logout"><button class="linklike">{{ t('logout') }}</button></form></nav></div>
 <div class="hello"><h1>{{ today }}</h1>
+<form class="searchbox" method="get" action="/search"><input type="search" name="q" placeholder="Notizen, Aufgaben und Projekte durchsuchen" aria-label="Suche"></form>
 <p>{{ focus|length }} Aufgaben mit Priorität 1, {{ open_total }} Projekte {{ status }}.</p></div>
 
 {% if inbox or prs %}

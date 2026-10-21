@@ -6,6 +6,7 @@ A small self-hosted dashboard that gives you and your AI agents one shared view 
 - **Today list** with every urgent task, check off in place.
 - **Inbox** for tasks that agents created since you last looked, plus open pull requests.
 - **Project pages** with tasks, ideas, activity log, branches, latest commits and README excerpt from GitHub.
+- **Notes as project memory**: timestamped notes per project from you or an agent, pinnable. Agents get pinned and recent notes in their briefing. Full-text search across notes, tasks and projects.
 - **Groups** you define yourself (hosting target, client, team...), sortable by recent activity or open tasks, with a collapsed "dormant" group for quiet projects.
 - **Admin area**: settings, projects, API tokens, JSON backup and Markdown import.
 - **Agent API** with revocable tokens. Agents read a project brief and write tasks and log entries.
@@ -53,7 +54,13 @@ curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/jso
      -d '{"text": "Fixed the login redirect"}' https://your-host/api/projects/my-project/log
 ```
 
-Tasks created through the API land in the inbox until you mark them as seen.
+```bash
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"      -d '{"text": "Decided: SQLite is enough, no Postgres", "pinned": true}' https://your-host/api/projects/my-project/notes
+curl -H "Authorization: Bearer $TOKEN" "https://your-host/api/search?q=sqlite"
+curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"      -d '{"status": "pause"}' https://your-host/api/projects/my-project
+```
+
+Tasks created through the API land in the inbox until you mark them as seen. `GET /export/notes.md` returns all notes as Markdown.
 
 ## Install on a phone
 

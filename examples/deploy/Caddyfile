@@ -1,0 +1,5 @@
+# Caddy obtains and renews the certificate automatically.
+# Run the app with AGENTWORKBENCH_COOKIE_SECURE=1.
+workbench.example.com {
+    reverse_proxy 127.0.0.1:8000
+}

@@ -1,0 +1,20 @@
+[Unit]
+Description=AgentWorkbench
+After=network.target
+
+[Service]
+User=awb
+Group=awb
+WorkingDirectory=/opt/agentworkbench
+Environment=AGENTWORKBENCH_DB=/var/lib/agentworkbench/dashboard.db
+# Set to 1 when served over HTTPS
+Environment=AGENTWORKBENCH_COOKIE_SECURE=0
+ExecStart=/opt/agentworkbench/venv/bin/uvicorn app:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/agentworkbench
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

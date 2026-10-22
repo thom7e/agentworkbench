@@ -4,7 +4,7 @@
 <div class="hello narrow"><h1>{{ site_title() }}</h1>
 {% if error %}<p class="notice err">{{ t(error) }}</p>{% endif %}
 <form class="fgrid" method="post" action="/login">
-<input type="hidden" name="next" value="{{ next }}">
+<input type="hidden" name="next" value="{{ next }}" data-fixed>
 <label>{{ t('password') }}<input type="password" name="password" required autofocus autocomplete="current-password"></label>
 <div><button class="go">{{ t('login.submit') }}</button></div></form></div>
 {% endblock %}

@@ -1,44 +1,44 @@
 {% extends "base.html" %}
 {% block body %}
-{% macro dot(g) %}{% if g %}<span class="dot {{ 'on' if g.status == 'running' else 'off' }}" title="{{ 'LXC' if g.type == 'lxc' else 'VM' }} {{ g.vmid }} {{ g.name }} auf {{ g.node }}: {{ g.status }}"></span>{% endif %}{% endmacro %}
+{% macro dot(g) %}{% if g %}<span class="dot {{ 'on' if g.status == 'running' else 'off' }}" title="{{ 'LXC' if g.type == 'lxc' else 'VM' }} {{ g.vmid }} {{ g.name }} {{ _('guest.on') }} {{ g.node }}: {{ g.status }}"></span>{% endif %}{% endmacro %}
 {% macro prow(p, top, p1, last, g) %}<a class="row" href="/p/{{ p.slug }}">
 <span class="name">{{ dot(g) }}{{ p.name }}</span>
 <span class="next">{% if top %}{{ top.text|replace('**','') }}{% else %}–{% endif %}</span>
-<span class="count">{% if p1 %}<b>{{ p1 }} dringend</b>, {% endif %}{{ p.open_n }} offen</span>
+<span class="count">{% if p1 %}<b>{{ _('row.urgent', n=p1) }}</b>, {% endif %}{{ _('row.open', n=p.open_n) }}</span>
 <span class="age">{{ last|ago }}</span>
 </a>{% endmacro %}
 <div class="top"><span class="brand">{{ site_title() }}</span>
-<nav>{% for s in ('aktiv','pause','archiv') %}<a href="/?status={{ s }}&sort={{ sort }}"{% if s == status %} aria-current="page"{% endif %}>{{ s }}</a>{% endfor %}<a href="/admin">{{ t('admin') }}</a><form class="inline" method="post" action="/logout"><button class="linklike">{{ t('logout') }}</button></form></nav></div>
+<nav>{% for s in ('aktiv','pause','archiv') %}<a href="/?status={{ s }}&sort={{ sort }}"{% if s == status %} aria-current="page"{% endif %}>{{ _('status.' ~ s) }}</a>{% endfor %}<a href="/admin">{{ _('admin') }}</a><form class="inline" method="post" action="/logout"><button class="linklike">{{ _('logout') }}</button></form></nav></div>
 <div class="hello"><h1>{{ today }}</h1>
-<form class="searchbox" method="get" action="/search"><input type="search" name="q" placeholder="Notizen, Aufgaben und Projekte durchsuchen" aria-label="Suche"></form>
-<p>{{ focus|length }} Aufgaben mit Priorität 1, {{ open_total }} Projekte {{ status }}.</p></div>
+<form class="searchbox" method="get" action="/search"><input type="search" name="q" placeholder="{{ _('idx.search.ph') }}" aria-label="{{ _('search.title') }}"></form>
+<p>{{ _('idx.summary', n=focus|length, m=open_total, status=_('status.' ~ status)) }}</p></div>
 
 {% if inbox or prs %}
-<section class="inbox"><div class="board-head"><div><h2>Posteingang</h2><p class="hint2">{{ inbox|length }} neue Aufgaben von Agenten, {{ prs|length }} offene Pull Requests</p></div>
-{% if inbox %}<form method="post" action="/inbox/seen-all"><input type="hidden" name="next" value="/"><button class="go ghost" title="Alle Aufgaben behalten und aus dem Posteingang nehmen">Alle übernehmen</button></form>{% endif %}</div>
+<section class="inbox"><div class="board-head"><div><h2>{{ _('inbox.title') }}</h2><p class="hint2">{{ _('inbox.hint', n=inbox|length, m=prs|length) }}</p></div>
+{% if inbox %}<form method="post" action="/inbox/seen-all"><input type="hidden" name="next" value="/"><button class="go ghost" title="{{ _('inbox.all.tip') }}">{{ _('inbox.all') }}</button></form>{% endif %}</div>
 <div class="inbox-grid">
-{% if inbox %}<div class="sheet"><h3>Neue Aufgaben</h3>
+{% if inbox %}<div class="sheet"><h3>{{ _('inbox.new') }}</h3>
 {% for t in inbox %}<div class="task"><div class="grow"><a class="proj" href="/p/{{ t.project }}">{{ t.pname }} <time>{{ t.created|fmtdate }}</time></a><span class="txt">{{ t.text|replace('**','') }}</span>
 <div class="actions">
-<form method="post" action="/t/{{ t.id }}/seen"><input type="hidden" name="next" value="/"><button class="act keep" title="Aufgabe behalten, sie erscheint im Board">Übernehmen</button></form>
-<form method="post" action="/t/{{ t.id }}/finished"><input type="hidden" name="next" value="/"><button class="act fin" title="Schon erledigt: wird als erledigt gespeichert">Bereits erledigt</button></form>
-<form method="post" action="/t/{{ t.id }}/delete"><input type="hidden" name="next" value="/"><button class="act del" title="Aufgabe endgültig löschen">Verwerfen</button></form>
+<form method="post" action="/t/{{ t.id }}/seen"><input type="hidden" name="next" value="/"><button class="act keep" title="{{ _('inbox.keep.tip') }}">{{ _('inbox.keep') }}</button></form>
+<form method="post" action="/t/{{ t.id }}/finished"><input type="hidden" name="next" value="/"><button class="act fin" title="{{ _('inbox.done.tip') }}">{{ _('inbox.done') }}</button></form>
+<form method="post" action="/t/{{ t.id }}/delete"><input type="hidden" name="next" value="/"><button class="act del" title="{{ _('inbox.drop.tip') }}">{{ _('inbox.drop') }}</button></form>
 </div></div></div>{% endfor %}</div>{% endif %}
-{% if prs %}<div class="sheet"><h3>Offene Pull Requests</h3>
-{% for r in prs %}<div class="task"><div><span class="proj">{{ r.repo }} · {{ r.author }} · {{ r.created|fmtdate }}{% if r.draft %} · Entwurf{% endif %}</span><a class="txt" href="{{ r.url }}">{{ r.title }}</a></div></div>{% endfor %}</div>{% endif %}
+{% if prs %}<div class="sheet"><h3>{{ _('inbox.prs') }}</h3>
+{% for r in prs %}<div class="task"><div><span class="proj">{{ r.repo }} · {{ r.author }} · {{ r.created|fmtdate }}{% if r.draft %} · {{ _('inbox.draft') }}{% endif %}</span><a class="txt" href="{{ r.url }}">{{ r.title }}</a></div></div>{% endfor %}</div>{% endif %}
 </div></section>
 {% endif %}
 
-<section class="board-wrap"><div class="board-head"><h2>Aufgaben nach Priorität <small class="hint">Karte ziehen, um die Priorität zu ändern</small></h2>
-<select id="pfilter" aria-label="Nach Projekt filtern"><option value="">Alle Projekte</option>
+<section class="board-wrap"><div class="board-head"><h2>{{ _('board.title') }} <small class="hint">{{ _('board.hint') }}</small></h2>
+<select id="pfilter" aria-label="{{ _('board.filter') }}"><option value="">{{ _('board.all') }}</option>
 {% for name in board_projects %}<option>{{ name }}</option>{% endfor %}</select></div>
 <div class="board">
-{% for pr, title in ((1,'Dringend'),(2,'Normal'),(3,'Irgendwann')) %}
-<div class="col p{{ pr }}" data-prio="{{ pr }}"><h3>{{ title }} <span>{{ board[pr]|length }}</span></h3>
+{% for pr in (1,2,3) %}
+<div class="col p{{ pr }}" data-prio="{{ pr }}"><h3>{{ _('prio.' ~ pr) }} <span>{{ board[pr]|length }}</span></h3>
 <div class="drop">
 {% for t in board[pr] %}
 <article class="card" draggable="true" data-id="{{ t.id }}" data-project="{{ t.pname }}">
-<form method="post" action="/t/{{ t.id }}/toggle"><input type="hidden" name="next" value="/"><button class="box" title="Als erledigt markieren" aria-label="Erledigt"></button></form>
+<form method="post" action="/t/{{ t.id }}/toggle"><input type="hidden" name="next" value="/"><button class="box" title="{{ _('task.done.tip') }}" aria-label="{{ _('task.done') }}"></button></form>
 <div><a href="/p/{{ t.project }}" class="cp">{{ t.pname }}</a>
 <p>{{ t.text|replace('**','')|truncate(140) }}</p>
 <form class="moves" method="post" action="/t/{{ t.id }}/prio"><input type="hidden" name="next" value="/">{% for n in (1,2,3) %}<button name="prio" value="{{ n }}"{% if n == t.prio %} class="on" disabled{% endif %}>{{ n }}</button>{% endfor %}</form></div>
@@ -48,41 +48,41 @@
 
 {% if status == 'aktiv' %}
 <div class="today">
-<section><h2>Heute zuerst</h2>
+<section><h2>{{ _('today.title') }}</h2>
 <div class="sheet">
 {% for t in focus %}
-<div class="task urgent"><form method="post" action="/t/{{ t.id }}/toggle"><input type="hidden" name="next" value="/"><button class="box" title="Als erledigt markieren" aria-label="Erledigt"></button></form>
+<div class="task urgent"><form method="post" action="/t/{{ t.id }}/toggle"><input type="hidden" name="next" value="/"><button class="box" title="{{ _('task.done.tip') }}" aria-label="{{ _('task.done') }}"></button></form>
 <div><a class="proj" href="/p/{{ t.project }}">{{ t.pname }}</a><span class="txt">{{ t.text|replace('**','') }}</span></div></div>
-{% else %}<p class="empty">Keine dringenden Aufgaben. Gute Gelegenheit für eine Idee.</p>{% endfor %}
+{% else %}<p class="empty">{{ _('today.empty') }}</p>{% endfor %}
 </div></section>
-<section><h2>Zuletzt gearbeitet</h2>
+<section><h2>{{ _('recent.title') }}</h2>
 <ul class="log">{% for a in recent %}<li><time>{{ a.ts|fmtdate }}</time><a href="/p/{{ a.project }}"><b>{{ a.pname }}</b></a> {{ a.text }}</li>
-{% else %}<li class="empty">Noch nichts eingetragen.</li>{% endfor %}</ul></section>
+{% else %}<li class="empty">{{ _('recent.empty') }}</li>{% endfor %}</ul></section>
 </div>
 {% endif %}
 
-<div class="sortbar">Projekte sortieren nach
-<a data-keep href="/?status={{ status }}&sort=aktuell{{ '&hide_stopped=1' if hide_stopped }}"{% if sort != 'offen' %} aria-current="true"{% endif %}>Aktualität</a>
-<a data-keep href="/?status={{ status }}&sort=offen{{ '&hide_stopped=1' if hide_stopped }}"{% if sort == 'offen' %} aria-current="true"{% endif %}>offenen Punkten</a>
-{% if px_enabled %}<a class="sw" data-keep href="/?status={{ status }}&sort={{ sort }}{{ '' if hide_stopped else '&hide_stopped=1' }}"{% if hide_stopped %} aria-current="true"{% endif %}>Gestoppte ausblenden</a>{% endif %}</div>
+<div class="sortbar">{{ _('sort.label') }}
+<a data-keep href="/?status={{ status }}&sort=aktuell{{ '&hide_stopped=1' if hide_stopped }}"{% if sort != 'offen' %} aria-current="true"{% endif %}>{{ _('sort.recent') }}</a>
+<a data-keep href="/?status={{ status }}&sort=offen{{ '&hide_stopped=1' if hide_stopped }}"{% if sort == 'offen' %} aria-current="true"{% endif %}>{{ _('sort.open') }}</a>
+{% if px_enabled %}<a class="sw" data-keep href="/?status={{ status }}&sort={{ sort }}{{ '' if hide_stopped else '&hide_stopped=1' }}"{% if hide_stopped %} aria-current="true"{% endif %}>{{ _('hide.stopped') }}</a>{% endif %}</div>
 {% for area, grp in groups.items() if grp.active or grp.dormant %}
-<section class="area"><h2>{{ area }} <small>{{ grp.active|length }} Projekte{% if grp.dormant %}, {{ grp.dormant|length }} ruhend{% endif %}</small></h2>
+<section class="area"><h2>{{ area }} <small>{{ _('area.count', n=grp.active|length) }}{% if grp.dormant %}{{ _('area.dormant', n=grp.dormant|length) }}{% endif %}</small></h2>
 <div class="rows">
 {% for p, top, p1, last, g in grp.active %}{{ prow(p, top, p1, last, g) }}{% endfor %}
 </div>
-{% if grp.dormant %}<details class="dormant"><summary>Ruhend ({{ grp.dormant|length }}): ohne offene Aufgaben, seit über {{ dormant_days }} Tagen keine Änderung</summary>
+{% if grp.dormant %}<details class="dormant"><summary>{{ _('dormant.sum', n=grp.dormant|length, d=dormant_days) }}</summary>
 <div class="rows">{% for p, top, p1, last, g in grp.dormant %}{{ prow(p, top, p1, last, g) }}{% endfor %}</div></details>{% endif %}
 </section>
 {% endfor %}
 {% if px_enabled %}
-<section class="area"><h2>Container und VMs <small>{{ guests|length }}{{ ', nur laufende' if hide_stopped }}</small></h2>
+<section class="area"><h2>{{ _('guests.title') }} <small>{{ guests|length }}{{ _('guests.running') if hide_stopped }}</small></h2>
 {% if guests %}<div class="rows">
 {% for g in guests %}<div class="row grow">
 <span class="name">{{ dot(g) }}{{ g.name }}</span>
 <span class="next">{{ 'LXC' if g.type == 'lxc' else 'VM' }} {{ g.vmid }} · Node {{ g.node }}{% if g.ip %} · {{ g.ip }}{% endif %}</span>
-<span class="count">{% if linked.get(g.vmid) %}{% for r in linked[g.vmid] %}<a href="/p/{{ r.slug }}">{{ r.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% else %}<a class="nolink" href="/admin/projects/new?vmid={{ g.vmid }}&name={{ g.name|urlencode }}">Projekt anlegen</a>{% endif %}</span>
+<span class="count">{% if linked.get(g.vmid) %}{% for r in linked[g.vmid] %}<a href="/p/{{ r.slug }}">{{ r.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% else %}<a class="nolink" href="/admin/projects/new?vmid={{ g.vmid }}&name={{ g.name|urlencode }}">{{ _('guests.create') }}</a>{% endif %}</span>
 <span class="age">{{ g.status }}</span></div>{% endfor %}
-</div>{% else %}<p class="empty">Keine Daten von Proxmox. Adresse und Token unter Verwaltung prüfen.</p>{% endif %}
+</div>{% else %}<p class="empty">{{ _('guests.none') }}</p>{% endif %}
 </section>
 {% endif %}
 <script>

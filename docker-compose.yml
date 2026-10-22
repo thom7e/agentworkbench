@@ -1,0 +1,16 @@
+services:
+  agentworkbench:
+    build: .
+    image: agentworkbench:latest
+    container_name: agentworkbench
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Set to 1 when the app is served over HTTPS (reverse proxy), so the session cookie is marked Secure.
+      AGENTWORKBENCH_COOKIE_SECURE: "0"
+    volumes:
+      - agentworkbench-data:/data
+
+volumes:
+  agentworkbench-data:

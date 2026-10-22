@@ -4,68 +4,68 @@
 <div class="top"><a href="/">← {{ site_title() }}</a></div>
 <div class="phead"><h1>{{ p.name }}</h1>
 <div class="facts">
-<form class="inline" method="post" action="/p/{{ p.slug }}/status"><select name="status" aria-label="Status" onchange="this.form.submit()">{% for s in ('aktiv','pause','archiv') %}<option{% if s == p.status %} selected{% endif %}>{{ s }}</option>{% endfor %}</select></form>{% if p.deploy %}<span>{{ p.deploy }}</span>{% endif %}{% if p.stack %}<span>{{ p.stack }}</span>{% endif %}
+<form class="inline" method="post" action="/p/{{ p.slug }}/status"><select name="status" aria-label="Status" onchange="this.form.submit()">{% for s in ('aktiv','pause','archiv') %}<option value="{{ s }}"{% if s == p.status %} selected{% endif %}>{{ _('status.' ~ s) }}</option>{% endfor %}</select></form>{% if p.deploy %}<span>{{ p.deploy }}</span>{% endif %}{% if p.stack %}<span>{{ p.stack }}</span>{% endif %}
 {% if p.repo %}<a href="https://github.com/{{ p.repo }}">{{ p.repo }}</a>{% endif %}{% if p.wiki %}<a href="{{ p.wiki }}">Wiki</a>{% endif %}
-{% for label, url in linked_notes(p) %}<a href="{{ url }}">{{ label }}</a>{% endfor %}<a href="/admin/projects/{{ p.slug }}">bearbeiten</a></div>
+{% for label, url in linked_notes(p) %}<a href="{{ url }}">{{ label }}</a>{% endfor %}<a href="/admin/projects/{{ p.slug }}">{{ _('proj.edit') }}</a></div>
 {% if p.summary %}<p class="lead">{{ p.summary }}</p>{% endif %}</div>
 
 <div class="cols"><div>
-{% for kind, title in (('todo','Offen'),('idee','Ideen')) %}
-<section><h2>{{ title }}</h2><div class="sheet">
+{% for kind in ('todo','idee') %}
+<section><h2>{{ _('sec.open') if kind == 'todo' else _('sec.ideas') }}</h2><div class="sheet">
 {% for t in todos if t.kind == kind and not t.done %}
-<div class="task{{ ' urgent' if t.prio == 1 }}"><form method="post" action="/t/{{ t.id }}/toggle"><button class="box" aria-label="Erledigt"></button></form>
-<span class="txt">{% if t.prio == 1 %}<span class="prio">dringend</span>{% endif %}{{ t.text|replace('**','') }}</span></div>
-{% else %}<p class="empty">{{ 'Nichts offen.' if kind == 'todo' else 'Noch keine Ideen.' }}</p>{% endfor %}
+<div class="task{{ ' urgent' if t.prio == 1 }}"><form method="post" action="/t/{{ t.id }}/toggle"><button class="box" aria-label="{{ _('task.done') }}"></button></form>
+<span class="txt">{% if t.prio == 1 %}<span class="prio">{{ _('tag.urgent') }}</span>{% endif %}{{ t.text|replace('**','') }}</span></div>
+{% else %}<p class="empty">{{ _('empty.open') if kind == 'todo' else _('empty.ideas') }}</p>{% endfor %}
 </div></section>{% endfor %}
 <form class="add" method="post" action="/p/{{ p.slug }}/add">
-<input name="text" placeholder="Neue Aufgabe oder Idee" required aria-label="Text">
-<select name="kind" aria-label="Art"><option value="todo">Aufgabe</option><option value="idee">Idee</option></select>
-<select name="prio" aria-label="Priorität"><option value="1">dringend</option><option value="2" selected>normal</option><option value="3">irgendwann</option></select>
-<button class="go">Hinzufügen</button></form>
-<section><h2>Notizen <small class="hint">Wissen und Entscheidungen zu diesem Projekt</small></h2>
+<input name="text" placeholder="{{ _('add.ph') }}" required aria-label="{{ _('add.ph') }}">
+<select name="kind" aria-label="{{ _('add.kind') }}"><option value="todo">{{ _('kind.todo') }}</option><option value="idee">{{ _('kind.idee') }}</option></select>
+<select name="prio" aria-label="{{ _('add.prio') }}"><option value="1">{{ _('popt.1') }}</option><option value="2" selected>{{ _('popt.2') }}</option><option value="3">{{ _('popt.3') }}</option></select>
+<button class="go">{{ _('add.btn') }}</button></form>
+<section><h2>{{ _('notes.title') }} <small class="hint">{{ _('notes.hint') }}</small></h2>
 <form class="add notesadd" method="post" action="/p/{{ p.slug }}/notes">
-<textarea name="text" rows="3" placeholder="Was sollte man später noch wissen?" required aria-label="Notiz"></textarea>
-<label class="check"><input type="checkbox" name="pinned" value="1"> Anpinnen</label><button class="go">Notiz speichern</button></form>
+<textarea name="text" rows="3" placeholder="{{ _('notes.ph') }}" required aria-label="{{ _('notes.aria') }}"></textarea>
+<label class="check"><input type="checkbox" name="pinned" value="1"> {{ _('notes.pin') }}</label><button class="go">{{ _('notes.save') }}</button></form>
 {% for n in notes %}<article class="note{{ ' pinned' if n.pinned }}">
-<header><span>{{ 'Agent' if n.author == 'agent' else 'Du' }} · {{ n.created|fmtdate }}{% if n.pinned %} · angepinnt{% endif %}</span>
-<span class="nact"><form class="inline" method="post" action="/n/{{ n.id }}/pin"><button class="linklike" title="Anpinnen oder lösen">{{ 'Lösen' if n.pinned else 'Anpinnen' }}</button></form>
-<form class="inline" method="post" action="/n/{{ n.id }}/delete"><button class="linklike del" title="Notiz löschen">Löschen</button></form></span></header>
-<div class="md">{{ n.text|md }}</div></article>{% else %}<p class="empty">Noch keine Notizen.</p>{% endfor %}
+<header><span>{{ _('author.agent') if n.author == 'agent' else _('author.user') }} · {{ n.created|fmtdate }}{% if n.pinned %} · {{ _('notes.pinned') }}{% endif %}</span>
+<span class="nact"><form class="inline" method="post" action="/n/{{ n.id }}/pin"><button class="linklike" title="{{ _('notes.pin.tip') }}">{{ _('notes.unpin') if n.pinned else _('notes.pin') }}</button></form>
+<form class="inline" method="post" action="/n/{{ n.id }}/delete"><button class="linklike del" title="{{ _('notes.del.tip') }}">{{ _('notes.del') }}</button></form></span></header>
+<div class="md">{{ n.text|md }}</div></article>{% else %}<p class="empty">{{ _('notes.empty') }}</p>{% endfor %}
 </section>
-<section><h2>Erledigt</h2><div class="sheet">
-{% for t in todos if t.done %}<div class="task t-done"><form method="post" action="/t/{{ t.id }}/toggle"><button class="box checked" aria-label="Wieder öffnen"></button></form>
+<section><h2>{{ _('done.title') }}</h2><div class="sheet">
+{% for t in todos if t.done %}<div class="task t-done"><form method="post" action="/t/{{ t.id }}/toggle"><button class="box checked" aria-label="{{ _('done.reopen') }}"></button></form>
 <div><span class="txt">{{ t.text|replace('**','') }}</span><time>{{ t.done_at|fmtdate }}</time></div></div>
-{% else %}<p class="empty">Noch nichts erledigt.</p>{% endfor %}
+{% else %}<p class="empty">{{ _('done.empty') }}</p>{% endfor %}
 </div></section></div>
 
 <div>
-{% if guest %}<section><h2>Läuft auf</h2><div class="sheet hostcard">
+{% if guest %}<section><h2>{{ _('host.title') }}</h2><div class="sheet hostcard">
 <p><span class="dot {{ 'on' if guest.status == 'running' else 'off' }}"></span><b>{{ 'LXC' if guest.type == 'lxc' else 'VM' }} {{ guest.vmid }} · {{ guest.name }}</b> <span class="hint2">{{ guest.status }}</span></p>
 <p>Node {{ guest.node }}{% if guest.ip %} · IP <code>{{ guest.ip }}</code>{% endif %}</p>
-<p class="hint2">CPU {{ (guest.cpu * 100)|round(0)|int }} % · RAM {{ guest.mem|gb }} von {{ guest.maxmem|gb }} · läuft seit {{ guest.uptime|uptime }}</p></div></section>
-{% elif p.vmid %}<section><h2>Läuft auf</h2><div class="sheet hostcard"><p class="hint2">Nr. {{ p.vmid }}, keine Daten von Proxmox.</p></div></section>{% endif %}
-{% if gh %}<section><h2>Git</h2>
+<p class="hint2">{{ _('host.stats', c=(guest.cpu * 100)|round(0)|int, m=guest.mem|gb, x=guest.maxmem|gb, u=guest.uptime|uptime) }}</p></div></section>
+{% elif p.vmid %}<section><h2>{{ _('host.title') }}</h2><div class="sheet hostcard"><p class="hint2">{{ _('host.nodata', n=p.vmid) }}</p></div></section>{% endif %}
+{% if gh %}<section><h2>{{ _('git.title') }}</h2>
 {% if gh.readme or gh.description %}<p class="readme">{{ gh.readme or gh.description }}</p>{% endif %}
-<p class="branches">Branches: {% for b in gh.branches %}<span class="br{{ ' main' if b == gh.default_branch }}">{{ b }}</span>{% endfor %}</p>
+<p class="branches">{{ _('git.branches') }}: {% for b in gh.branches %}<span class="br{{ ' main' if b == gh.default_branch }}">{{ b }}</span>{% endfor %}</p>
 <ul class="commits">{% for c in gh.commits %}<li><a href="{{ c.url }}"><code>{{ c.sha }}</code> {{ c.msg|truncate(90) }}</a><time>{{ c.date }}</time></li>{% endfor %}</ul>
 </section>{% endif %}
-<section><h2>Verlauf</h2>
-<ul class="log">{% for a in log %}<li><time>{{ a.ts|fmtdate }}</time>{{ a.text }}</li>{% else %}<li class="empty">Noch kein Eintrag.</li>{% endfor %}</ul>
-<form class="add" method="post" action="/p/{{ p.slug }}/log"><input name="text" placeholder="Was wurde gemacht?" required aria-label="Verlaufseintrag"><button class="go">Eintragen</button></form>
+<section><h2>{{ _('log.title') }}</h2>
+<ul class="log">{% for a in log %}<li><time>{{ a.ts|fmtdate }}</time>{{ a.text }}</li>{% else %}<li class="empty">{{ _('log.empty') }}</li>{% endfor %}</ul>
+<form class="add" method="post" action="/p/{{ p.slug }}/log"><input name="text" placeholder="{{ _('log.ph') }}" required aria-label="{{ _('log.aria') }}"><button class="go">{{ _('log.btn') }}</button></form>
 </section></div></div>
-<section class="docs" id="docs"><h2>Dokumente <small class="hint">Notizen und Doku zu diesem Projekt, direkt hier lesen und bearbeiten</small></h2>
+<section class="docs" id="docs"><h2>{{ _('docs.title') }} <small class="hint">{{ _('docs.hint') }}</small></h2>
 {% for d in docs %}<details class="doc" id="doc-{{ d.id }}"{% if loop.length == 1 %} open{% endif %}>
 <summary><span class="dt">{{ d.title }}</span><span class="dm">{{ d.updated|fmtdate }}</span></summary>
 <div class="docbody"><div class="md">{{ d.body|md }}</div>
-<details class="docedit"><summary>Bearbeiten</summary>
-<form method="post" action="/d/{{ d.id }}/save" class="fgrid wide"><label>Titel<input name="title" value="{{ d.title }}" required></label>
-<label>Text (Markdown)<textarea name="body" rows="18">{{ d.body }}</textarea></label>
-<div class="actions"><button class="act keep">Speichern</button></div></form>
-<form method="post" action="/d/{{ d.id }}/delete" class="inline" onsubmit="return confirm('Dokument löschen?')"><button class="act del">Dokument löschen</button></form></details>
-{% if d.source %}<p class="hint2">Ursprung: {{ d.source }}</p>{% endif %}</div></details>
-{% else %}<p class="empty">Noch keine Dokumente.</p>{% endfor %}
-<details class="doc newdoc"><summary>Neues Dokument</summary>
-<form method="post" action="/p/{{ p.slug }}/docs" class="fgrid wide"><label>Titel<input name="title" required></label>
-<label>Text (Markdown)<textarea name="body" rows="10"></textarea></label><div class="actions"><button class="act keep">Anlegen</button></div></form></details>
+<details class="docedit"><summary>{{ _('docs.edit') }}</summary>
+<form method="post" action="/d/{{ d.id }}/save" class="fgrid wide"><label>{{ _('docs.label.title') }}<input name="title" value="{{ d.title }}" required></label>
+<label>{{ _('docs.label.text') }}<textarea name="body" rows="18">{{ d.body }}</textarea></label>
+<div class="actions"><button class="act keep">{{ _('docs.save') }}</button></div></form>
+<form method="post" action="/d/{{ d.id }}/delete" class="inline" onsubmit="return confirm({{ _('docs.confirm')|tojson }})"><button class="act del">{{ _('docs.delete') }}</button></form></details>
+{% if d.source %}<p class="hint2">{{ _('docs.source') }}: {{ d.source }}</p>{% endif %}</div></details>
+{% else %}<p class="empty">{{ _('docs.empty') }}</p>{% endfor %}
+<details class="doc newdoc"><summary>{{ _('docs.new') }}</summary>
+<form method="post" action="/p/{{ p.slug }}/docs" class="fgrid wide"><label>{{ _('docs.label.title') }}<input name="title" required></label>
+<label>{{ _('docs.label.text') }}<textarea name="body" rows="10"></textarea></label><div class="actions"><button class="act keep">{{ _('docs.create') }}</button></div></form></details>
 </section>
 {% endblock %}

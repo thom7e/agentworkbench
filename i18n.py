@@ -1,4 +1,5 @@
 import settings
+from i18n_ui import UI_DE, UI_EN
 
 TEXTS = {
     "de": {
@@ -150,6 +151,9 @@ TEXTS = {
         "data.import.go": "Import",
     },
 }
+
+TEXTS["de"].update(UI_DE)
+TEXTS["en"].update(UI_EN)
 
 
 def t(key, **kw):

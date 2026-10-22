@@ -1,23 +1,49 @@
 # AgentWorkbench
 
-A small self-hosted dashboard that gives you and your AI agents one shared view of every project: open tasks, ideas, a priority board, recent activity and live GitHub data. Open it in the morning, see what matters, and let agents such as Claude Code keep it up to date while they work.
+**One shared view of all your projects, for you and your AI agents.**
 
-- **Priority board** across all projects. Drag a card to change its priority (on phones: tap 1, 2 or 3).
-- **Today list** with every urgent task, check off in place.
-- **Inbox** for tasks that agents created since you last looked, plus open pull requests.
-- **Project pages** with tasks, ideas, activity log, branches, latest commits and README excerpt from GitHub.
-- **Notes as project memory**: timestamped notes per project from you or an agent, pinnable. Agents get pinned and recent notes in their briefing. Full-text search across notes, tasks and projects.
-- **Documents per project**: Markdown pages you read and edit right on the project page, with search.
+AgentWorkbench is a small self-hosted dashboard. You open it in the morning and see what matters: urgent tasks, a priority board across every project, what your agents did, and what changed on GitHub. Agents such as [Claude Code](https://claude.com/claude-code) read a briefing before they start, tick off tasks while they work, and leave notes for next time.
+
+One FastAPI process, one SQLite file, no build step. English and German UI. Installable on your phone.
+
+<p align="center">
+  <img src="docs/images/dashboard-dark.png" alt="Dashboard with inbox and priority board" width="820">
+</p>
+
+<p align="center">
+  <img src="docs/images/project.png" alt="Project page" width="400">
+  <img src="docs/images/mobile.png" alt="Phone view" width="190">
+  <img src="docs/images/dashboard-light.png" alt="Light theme" width="400">
+</p>
+
+## What it does
+
+- **Priority board** across all projects. Drag a card to change its priority (on phones, tap 1, 2 or 3).
+- **Today first**: every urgent task in one list, check off in place.
+- **Inbox** for tasks that agents created since you last looked, with three clear answers: *Accept*, *Already done*, *Discard*. Open pull requests show up there too.
+- **Project pages** with tasks, ideas, activity log, branches, latest commits and a README excerpt from GitHub.
+- **Notes as project memory**: timestamped notes from you or an agent, pinnable. Agents get the pinned and the latest notes in their briefing.
+- **Documents** per project: Markdown pages you read and edit right on the project page.
+- **Search** across notes, documents, tasks and projects.
+- **Groups** you define (customers, hosting target, team ...), sorted by recent activity or open tasks, with a collapsed *dormant* section for quiet projects.
 - **Infrastructure view** (optional): read-only Proxmox integration shows live status and IP per project and lists all containers and VMs, with a switch to hide stopped ones.
-- **Groups** you define yourself (hosting target, client, team...), sortable by recent activity or open tasks, with a collapsed "dormant" group for quiet projects.
 - **Admin area**: settings, projects, API tokens, JSON backup and Markdown import.
-- **Agent API** with revocable tokens. Agents read a project brief and write tasks and log entries.
-- **Installable on a phone** (iOS and Android): add it to the home screen, it opens full screen.
-- German and English UI.
-
-One FastAPI process, one SQLite file, no build step.
+- **Agent API** with revocable tokens.
+- **Phone app**: add it to the home screen, it opens full screen.
 
 ## Quick start
+
+### Docker (recommended)
+
+```bash
+git clone https://github.com/thom7e/agentworkbench.git
+cd agentworkbench
+docker compose up -d
+```
+
+Open <http://localhost:8000>. The first visit asks you to choose the admin password. Data lives in the `agentworkbench-data` volume.
+
+### Python
 
 ```bash
 git clone https://github.com/thom7e/agentworkbench.git
@@ -27,76 +53,56 @@ pip install -r requirements.txt
 uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-Open `http://localhost:8000`. The first visit asks you to choose the admin password. Then open **Admin → Settings** to set the language, your groups and your GitHub account.
-
-## Configuration
-
-Everything is configured in the admin area. A few values come from the environment:
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `AGENTWORKBENCH_DB` | `./dashboard.db` | Path of the SQLite file |
-| `AGENTWORKBENCH_COOKIE_SECURE` | `0` | Set to `1` when served over HTTPS |
-| `AGENTWORKBENCH_TOKEN` | empty | Optional static API token (tokens from the admin area are preferred) |
-| `GITHUB_TOKEN` | empty | Fallback if no token is stored in the settings |
-
-GitHub features (commits, branches, pull requests, last push) need a fine-grained token with read-only access to your repositories. Without it, the rest of the app works unchanged.
-
-## Agent API
-
-Create a token under **Admin → API access**. It is shown once and stored only as a hash.
+### Try it with demo data
 
 ```bash
-curl -H "Authorization: Bearer $TOKEN" https://your-host/api/overview
+AGENTWORKBENCH_DB=./demo.db python scripts/demo_seed.py
+AGENTWORKBENCH_DB=./demo.db uvicorn app:app
+```
+
+Sign in with `demo-password-123`. The demo contains fictional projects, an inbox, notes and documents.
+
+## Documentation
+
+| Guide | Contents |
+|---|---|
+| [Getting started](docs/getting-started.md) | First run, first project, daily workflow |
+| [Configuration](docs/configuration.md) | Every setting and environment variable |
+| [Working with agents](docs/agents.md) | The briefing, notes vs. log, a ready-made Claude Code skill |
+| [API reference](docs/api.md) | All endpoints with examples |
+| [Proxmox integration](docs/proxmox.md) | Read-only token, linking projects to containers |
+| [Deployment](docs/deployment.md) | Docker, systemd, HTTPS, backups, updates, password reset |
+| [Security](docs/security.md) | What is protected, what is not |
+| [Development](docs/development.md) | Project layout, tests, translations, screenshots |
+
+A German summary is in [README.de.md](README.de.md).
+
+## How agents use it
+
+```bash
+# Before work: what is open, what should I know?
 curl -H "Authorization: Bearer $TOKEN" https://your-host/api/projects/my-project
-curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-     -d '{"text": "Add rate limiting", "prio": 1}' https://your-host/api/projects/my-project/todos
+
+# While working
 curl -X POST -H "Authorization: Bearer $TOKEN" https://your-host/api/todos/42/done
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+     -d '{"text": "Decided: SQLite is enough, no Postgres", "pinned": true}' \
+     https://your-host/api/projects/my-project/notes
+
+# When done
 curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
      -d '{"text": "Fixed the login redirect"}' https://your-host/api/projects/my-project/log
 ```
 
-```bash
-curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-     -d '{"text": "Decided: SQLite is enough, no Postgres", "pinned": true}' https://your-host/api/projects/my-project/notes
-curl -H "Authorization: Bearer $TOKEN" "https://your-host/api/search?q=sqlite"
-curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-     -d '{"status": "pause"}' https://your-host/api/projects/my-project
-```
+A ready-made skill for Claude Code is in [`examples/claude-code`](examples/claude-code). See [Working with agents](docs/agents.md).
 
-Tasks created through the API land in the inbox until you mark them as seen. `GET /export/notes.md` returns all notes as Markdown.
+## Status and limits
 
-## Proxmox integration (optional)
-
-Create a read-only user and token on your cluster, then enter URL, token ID and secret under **Admin → Settings**:
-
-```bash
-pveum user add dashboard@pve
-pveum acl modify / --users dashboard@pve --roles PVEAuditor
-pveum user token add dashboard@pve awb --privsep 0
-```
-
-Link a project to a guest with its **container or VM number** in the project settings. The dashboard never starts, stops or changes anything.
-
-## Install on a phone
-
-Open the site in Safari (iPhone) or Chrome (Android), then use **Share → Add to Home Screen**. The app opens without browser chrome and keeps you signed in for 30 days.
-
-Serve it over HTTPS if you reach it from outside your network, and set `AGENTWORKBENCH_COOKIE_SECURE=1`.
-
-## Security notes
-
-- Everything except the login page requires the admin password. The API requires a token.
-- Passwords are hashed with scrypt, API tokens with SHA-256, sessions are signed cookies.
-- Login attempts are rate limited per IP, cross-origin form posts are rejected.
-- There is a single admin account. Put the app behind HTTPS and, if it is reachable from the internet, an access proxy of your choice.
-
-## Tests
-
-```bash
-pytest
-```
+- One admin account, no per-user permissions. Put the app behind HTTPS if it is reachable from the internet.
+- SQLite only. It is plenty for hundreds of projects and many thousands of tasks.
+- Some stored values are German for historical reasons: project status `aktiv`, `pause`, `archiv` and task kind `todo`, `idee`. The UI shows translated labels. The [API reference](docs/api.md) lists the exact values.
+- Documents and notes are plain Markdown, sanitized when rendered. There are no file uploads.
 
 ## License
 
-MIT
+[MIT](LICENSE)

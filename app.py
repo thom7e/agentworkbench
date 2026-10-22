@@ -10,6 +10,7 @@ import auth
 import db as database
 import github
 import proxmox
+from i18n import t as tr
 import settings
 from admin import router as admin_router
 from db import BASE, db, now
@@ -130,6 +131,8 @@ def start_session(target):
 def login_form(request: Request, next: str = "/"):
     if not auth.admin_exists():
         return RedirectResponse("/setup", status_code=303)
+    if auth.valid_session(request):
+        return RedirectResponse(safe_next(next), status_code=303)
     return templates.TemplateResponse(request, "login.html", {"error": "", "next": safe_next(next)})
 
 
@@ -362,7 +365,7 @@ def web_toggle(tid: int, next: str = Form("")):
                     (done, now() if done else None, tid))
         if done:
             con.execute("INSERT INTO activity(project,text,ts) VALUES(?,?,?)",
-                        (t["project"], f"erledigt: {t['text']}", now()))
+                        (t["project"], f"{tr('log.done')} {t['text']}", now()))
         con.commit()
     return RedirectResponse(safe_next(next, f"/p/{t['project']}"), status_code=303)
 
@@ -383,7 +386,7 @@ def web_finished(tid: int, next: str = Form("/")):
             raise HTTPException(404)
         con.execute("UPDATE todos SET seen=1, done=1, done_at=? WHERE id=?", (now(), tid))
         con.execute("INSERT INTO activity(project,text,ts) VALUES(?,?,?)",
-                    (t["project"], f"erledigt: {t['text']}", now()))
+                    (t["project"], f"{tr('log.done')} {t['text']}", now()))
         con.commit()
     return RedirectResponse(safe_next(next), status_code=303)
 
@@ -622,7 +625,7 @@ def api_done(tid: int):
             raise HTTPException(404)
         con.execute("UPDATE todos SET done=1, done_at=? WHERE id=?", (now(), tid))
         con.execute("INSERT INTO activity(project,text,ts) VALUES(?,?,?)",
-                    (t["project"], f"erledigt: {t['text']}", now()))
+                    (t["project"], f"{tr('log.done')} {t['text']}", now()))
         con.commit()
     return {"ok": True}
 

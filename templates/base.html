@@ -1,4 +1,4 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!doctype html><html lang="{{ lang() }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1c1b19">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="AgentWorkbench">
@@ -22,7 +22,7 @@
   document.addEventListener('click',function(e){var a=e.target.closest('a[data-keep]');if(a)window.keepScroll()});
   document.addEventListener('submit',function(e){
     var n=e.target.querySelector('input[name=next]');
-    if(n)n.value=location.pathname+location.search;
+    if(n&&!n.hasAttribute('data-fixed'))n.value=location.pathname+location.search;
     window.keepScroll();
   });
 })();

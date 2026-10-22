@@ -37,8 +37,10 @@ def test_requires_login_after_logout(client):
     assert client.get("/").status_code == 303
     r = client.post("/login", data={"password": "wrong password"})
     assert r.status_code == 200
+    assert "data-fixed" in client.get("/login").text
     r = client.post("/login", data={"password": PASSWORD, "next": "/"})
-    assert r.status_code == 303
+    assert r.status_code == 303 and r.headers["location"] == "/"
+    assert client.get("/login?next=/p/demo-app").headers["location"] == "/p/demo-app"
 
 
 def test_api_requires_token(client):
@@ -202,3 +204,19 @@ def test_settings_roundtrip(client):
     })
     html = client.get("/").text
     assert "My Board" in html
+
+
+def test_english_ui_after_language_switch(client):
+    html = client.get("/").text
+    assert "Tasks by priority" in html and "Aufgaben nach" not in html
+    assert '<html lang="en">' in html
+
+
+def test_demo_seed_creates_a_complete_dashboard(tmp_path, monkeypatch):
+    import subprocess
+    import sys
+    env = {**os.environ, "AGENTWORKBENCH_DB": str(tmp_path / "demo.db")}
+    out = subprocess.run([sys.executable, "scripts/demo_seed.py"], env=env, capture_output=True, text=True)
+    assert out.returncode == 0 and "demo-password-123" in out.stdout
+    again = subprocess.run([sys.executable, "scripts/demo_seed.py"], env=env, capture_output=True, text=True)
+    assert again.returncode != 0

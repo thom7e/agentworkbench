@@ -23,10 +23,10 @@ def ago(ts):
         return ""
     days = ago_days(ts)
     if days <= 0:
-        return "heute"
+        return t("ago.today")
     if days == 1:
-        return "gestern"
-    return f"vor {days} Tagen"
+        return t("ago.yesterday")
+    return t("ago.days", n=days)
 
 
 def linked_notes(p):
@@ -62,7 +62,7 @@ def uptime(sec):
     if not sec:
         return "–"
     days, rest = divmod(int(sec), 86400)
-    return f"{days} Tage" if days else f"{rest // 3600} Std"
+    return t("uptime.days", n=days) if days else t("uptime.hours", n=rest // 3600)
 
 
 templates.env.filters["gb"] = gb
@@ -71,6 +71,8 @@ templates.env.filters["md"] = md
 templates.env.filters["ago"] = ago
 templates.env.filters["fmtdate"] = lambda ts: ts[5:16].replace("-", ".", 1).replace(" ", ", ") if ts else ""
 templates.env.globals["t"] = t
+templates.env.globals["_"] = t
+templates.env.globals["lang"] = lambda: settings.get("language") if settings.get("language") in ("de", "en") else "de"
 templates.env.globals["site_title"] = lambda: settings.get("site_title")
 templates.env.globals["linked_notes"] = linked_notes
 

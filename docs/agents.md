@@ -7,6 +7,7 @@ AgentWorkbench is built so that an AI agent can pick up a project the way a coll
 1. **Briefing.** Before the agent starts on a project it fetches one Markdown text with everything it needs: where the project runs, open tasks with priority, ideas, pinned notes, the latest notes, the document list, recently finished work and the last log entries.
 2. **Work.** While it works the agent ticks off finished tasks, adds new tasks and ideas, and saves anything worth remembering as a note.
 3. **Trace.** At the end it writes one log entry: what was done, in a sentence, ideally with a commit hash.
+4. **Closing check.** Before it finishes, it goes through the open tasks once more and ticks off everything that is done and proven. Tasks that are only partly done stay open and are shortened to the remainder. Unsure cases are reported to you instead of being ticked off. The skill and the `CLAUDE.md` snippet in `examples/claude-code` make this a fixed rule.
 
 Nothing is written without a token, and every write by an agent is visible: new tasks land in your **inbox** until you accept, mark as done or discard them.
 

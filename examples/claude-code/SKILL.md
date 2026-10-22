@@ -21,8 +21,9 @@ Start every command with:
    curl -s -H "$H" "$AWB_URL/api/projects/<slug>"
    ```
    The briefing lists open tasks with id and priority (P1 urgent, P2 normal, P3 someday), ideas, pinned and recent notes, documents, recently finished work and the latest log entries.
+   **Check at the start:** compare every open task with the real state (read-only: repository, service, file, log). If a task is provably done already, tick it off at once and name the evidence in the log ("checked: ...").
 2. **While working**
-   - Tick off a finished task: `curl -s -X POST -H "$H" "$AWB_URL/api/todos/<id>/done"`
+   - **Tick off at once** when a task is finished and verified, not only at the end. Also tasks that were finished on the side: `curl -s -X POST -H "$H" "$AWB_URL/api/todos/<id>/done"`
    - Add a task (it lands in the user's inbox):
      ```bash
      curl -s -X POST -H "$H" -H "Content-Type: application/json; charset=utf-8" \
@@ -38,7 +39,12 @@ Start every command with:
    - Documents (longer Markdown pages): the briefing lists them. Read with `GET /api/docs/<id>`, change with `PUT /api/docs/<id>` and `{"title":"...","body":"..."}`, create with `POST /api/projects/<slug>/docs`. Read before changing and change only what is needed.
    - Move a task to another project or change its priority: `PATCH /api/todos/<id>` with `{"project":"<slug>","prio":2}`
    - Change project fields without touching the rest: `PATCH /api/projects/<slug>`
-3. **End:** one log entry, a sentence on what was done, with a commit hash if there is one.
+3. **End, closing check (never skip):**
+   1. Fetch the briefing again and go through all open tasks of the project, including those of other agents.
+   2. Tick off every task that was finished in this session or whose completion is proven on the system.
+   3. Partly done: do not tick off. Shorten the text with `PATCH /api/todos/<id>` to the remainder, or create a new task for the rest and tick off the old one.
+   4. Unsure: do not tick off, tell the user in your answer ("possibly done: #12, please confirm").
+   5. One log entry, a sentence on what was done, with a commit hash if there is one. Add follow-up work as a new task.
    ```bash
    curl -s -X POST -H "$H" -H "Content-Type: application/json; charset=utf-8" \
      --data-binary '{"text":"..."}' "$AWB_URL/api/projects/<slug>/log"
@@ -55,7 +61,8 @@ Not every project has a repository. For servers, containers, networks or backups
 
 ## Rules
 
-- Tick off only tasks that are really finished and verified.
+- **Ticking off is mandatory:** a finished but still open task is a mistake. So is ticking off without proof. Finished means verified (test green, service running, file present, commit there), not just attempted.
+- Name the evidence briefly, in the log entry or in your answer ("checked: limit set in the running unit").
 - No duplicates: check the briefing before adding.
 - No passwords, tokens or other credentials in any text.
 - Unknown project: ask the user, do not guess. A new project is created with `PUT /api/projects` (`slug`, `name`, optionally `area`, `deploy`, `stack`, `summary`, `repo`).

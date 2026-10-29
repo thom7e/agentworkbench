@@ -444,6 +444,7 @@ class TodoIn(BaseModel):
     prio: int = 2
     kind: str = "todo"
     short: str = ""
+    check: str = ""
 
 
 class LogIn(BaseModel):
@@ -600,6 +601,7 @@ class TodoPatch(BaseModel):
     project: str | None = None
     text: str | None = None
     short: str | None = None
+    check: str | None = None
     prio: int | None = None
     kind: str | None = None
 
@@ -607,6 +609,8 @@ class TodoPatch(BaseModel):
 @app.patch("/api/todos/{tid}")
 def api_patch_todo(tid: int, p: TodoPatch):
     fields = p.model_dump(exclude_none=True)
+    if "check" in fields:
+        fields["check_spec"] = fields.pop("check")
     with closing(db()) as con:
         if not con.execute("SELECT 1 FROM todos WHERE id=?", (tid,)).fetchone():
             raise HTTPException(404)
@@ -623,8 +627,8 @@ def api_add(slug: str, t: TodoIn):
     with closing(db()) as con:
         project_or_404(con, slug)
         cur = con.execute(
-            "INSERT INTO todos(project,text,kind,prio,created,source,seen,short) VALUES(?,?,?,?,?,'agent',0,?)",
-            (slug, t.text, t.kind, t.prio, now(), t.short.strip()),
+            "INSERT INTO todos(project,text,kind,prio,created,source,seen,short,check_spec) VALUES(?,?,?,?,?,'agent',0,?,?)",
+            (slug, t.text, t.kind, t.prio, now(), t.short.strip(), t.check.strip()),
         )
         con.commit()
     return {"id": cur.lastrowid}

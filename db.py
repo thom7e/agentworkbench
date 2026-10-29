@@ -71,6 +71,8 @@ MIGRATIONS = (
     ("todos", "source TEXT NOT NULL DEFAULT 'user'"),
     ("todos", "seen INTEGER NOT NULL DEFAULT 1"),
     ("todos", "short TEXT NOT NULL DEFAULT ''"),
+    ("todos", "check_spec TEXT NOT NULL DEFAULT ''"),
+    ("todos", "check_note TEXT NOT NULL DEFAULT ''"),
     ("projects", "area TEXT NOT NULL DEFAULT ''"),
     ("projects", "vmid INTEGER NOT NULL DEFAULT 0"),
     ("projects", "live INTEGER NOT NULL DEFAULT 0"),

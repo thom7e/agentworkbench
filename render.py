@@ -1,4 +1,5 @@
 import re
+from contextlib import closing
 from datetime import datetime
 from urllib.parse import quote
 
@@ -8,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
 import settings
+from db import db
 from db import BASE
 from i18n import t
 
@@ -74,7 +76,14 @@ templates.env.globals["t"] = t
 templates.env.globals["_"] = t
 templates.env.globals["lang"] = lambda: settings.get("language") if settings.get("language") in ("de", "en") else "de"
 templates.env.globals["site_title"] = lambda: settings.get("site_title")
+def quick_projects():
+    with closing(db()) as con:
+        return [(r["slug"], r["name"]) for r in con.execute(
+            "SELECT slug, name FROM projects WHERE status='aktiv' ORDER BY live DESC, name COLLATE NOCASE")]
+
+
 templates.env.globals["linked_notes"] = linked_notes
+templates.env.globals["quick_projects"] = quick_projects
 
 
 def slugify(name):

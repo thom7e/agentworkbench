@@ -234,3 +234,13 @@ button.act:hover{background:var(--hover)}
 
 .live{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:var(--accent);color:#fff;font-family:var(--body,inherit);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;vertical-align:middle}
 @media (prefers-color-scheme:dark){.live{color:#1a1816}}
+
+.qa-fab{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:30px;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;z-index:20}
+.qa-note{position:fixed;left:16px;right:90px;bottom:max(24px,env(safe-area-inset-bottom));margin:0;font-size:13px;color:var(--mut);z-index:20}
+#qa{border:1px solid var(--line);border-radius:10px;background:var(--bg);color:inherit;padding:16px;width:min(92vw,460px)}
+#qa::backdrop{background:rgba(0,0,0,.45)}
+.qa-form{display:grid;gap:10px}.qa-form textarea,.qa-form select{width:100%;font:inherit;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:inherit}
+.qa-row{display:flex;justify-content:space-between;gap:10px;align-items:center}.qa-prio label{margin-right:10px}.qa-row select{width:auto}
+.qa-btns{display:flex;justify-content:flex-end;gap:10px}.qa-btns button{font:inherit;min-height:44px;padding:0 16px;border-radius:6px}
+.term{display:none;font-family:monospace;font-size:12px;margin-left:6px;padding:0 6px;border:1px solid var(--line);border-radius:4px;text-decoration:none;color:var(--mut)}
+.desk .term{display:inline-block}.term:hover{color:var(--accent);border-color:var(--accent)}

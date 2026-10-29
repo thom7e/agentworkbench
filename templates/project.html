@@ -68,4 +68,5 @@
 <form method="post" action="/p/{{ p.slug }}/docs" class="fgrid wide"><label>{{ _('docs.label.title') }}<input name="title" required></label>
 <label>{{ _('docs.label.text') }}<textarea name="body" rows="10"></textarea></label><div class="actions"><button class="act keep">{{ _('docs.create') }}</button></div></form></details>
 </section>
+{% include 'quickadd.html' %}
 {% endblock %}

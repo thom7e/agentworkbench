@@ -164,7 +164,7 @@ def test_proxmox_status_ip_and_hide_stopped(client, monkeypatch):
     assert "Container und VMs" in page and "ohne-projekt" in page and "Projekt anlegen" in page
     assert 'class="dot on"' in page and 'class="dot off"' in page
     hidden = client.get("/?hide_stopped=1").text
-    assert "Holtei App" not in hidden and "Bibliothek" in hidden
+    assert 'href="/p/holtei-app"' not in hidden and 'href="/p/bibliothek"' in hidden
     proj = client.get("/p/bibliothek").text
     assert "Läuft auf" in proj and "192.168.178.137" in proj
     token = client.post("/admin/tokens", data={"name": "t6"}).text.split('class="token">')[1].split("<")[0]
@@ -228,3 +228,13 @@ def test_live_toggle_shows_badge(client):
     assert 'class="live"' in client.get("/").text and "checked" in client.get("/p/demo-app").text
     client.post("/p/demo-app/live", data={})
     assert 'class="live"' not in client.get("/").text
+
+
+def test_pwa_files_and_quick_add(client):
+    sw = client.get("/sw.js")
+    assert sw.status_code == 200 and sw.headers["service-worker-allowed"] == "/"
+    html = client.get("/").text
+    assert 'id="qa"' in html and "/static/app.js" in html and 'value="demo-app"' in html
+    assert client.post("/p/demo-app/add", data={"text": "Per Schnell-Eintrag", "prio": "2", "kind": "todo"}).status_code == 303
+    assert "Per Schnell-Eintrag" in client.get("/").text
+    assert "agentworkbench://run?project=demo-app" in client.get("/").text

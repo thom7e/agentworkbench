@@ -1,0 +1,11 @@
+<button class="qa-fab" id="qa-open" type="button" aria-label="{{ _('qa.open') }}">+</button>
+<p class="qa-note" id="qa-note" data-queued="{{ _('qa.queued') }}" hidden></p>
+<dialog id="qa"><form id="qa-form" class="qa-form">
+<textarea id="qa-text" rows="3" required placeholder="{{ _('qa.placeholder') }}"></textarea>
+<select id="qa-project" aria-label="{{ _('qa.project') }}">{% for slug, name in quick_projects() %}<option value="{{ slug }}"{% if p is defined and p.slug == slug %} selected{% endif %}>{{ name }}</option>{% endfor %}</select>
+<div class="qa-row">
+<span class="qa-prio">{% for n in (1, 2, 3) %}<label><input type="radio" name="qa-prio" value="{{ n }}"{% if n == 2 %} checked{% endif %}> P{{ n }}</label>{% endfor %}</span>
+<select id="qa-kind" aria-label="{{ _('qa.kind') }}"><option value="todo">{{ _('qa.todo') }}</option><option value="idee">{{ _('qa.idea') }}</option></select>
+</div>
+<div class="qa-btns"><button type="button" id="qa-cancel">{{ _('qa.cancel') }}</button><button type="submit" class="act">{{ _('qa.send') }}</button></div>
+</form></dialog>

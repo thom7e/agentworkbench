@@ -17,7 +17,7 @@ COOKIE = "session"
 MAX_AGE = 60 * 60 * 24 * 30
 ENV_TOKEN = os.environ.get("AGENTWORKBENCH_TOKEN", "")
 SECURE_COOKIE = os.environ.get("AGENTWORKBENCH_COOKIE_SECURE", "0") == "1"
-PUBLIC_PREFIXES = ("/static", "/login", "/setup", "/healthz")
+PUBLIC_PREFIXES = ("/static", "/login", "/setup", "/healthz", "/sw.js")
 API_PREFIXES = ("/api", "/export")
 
 _fails = {}

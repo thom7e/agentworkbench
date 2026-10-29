@@ -40,7 +40,7 @@
 <article class="card" draggable="true" data-id="{{ t.id }}" data-project="{{ t.pname }}">
 <form method="post" action="/t/{{ t.id }}/toggle"><input type="hidden" name="next" value="/"><button class="box" title="{{ _('task.done.tip') }}" aria-label="{{ _('task.done') }}"></button></form>
 <div><a href="/p/{{ t.project }}" class="cp">{{ t.pname }}</a>
-<p>{{ t.text|replace('**','')|truncate(140) }}</p>
+<p>{{ (t.short or t.text|replace('**',''))|truncate(140) }}{% if True %} <a class="term" href="agentworkbench://run?project={{ t.project }}&amp;todo={{ t.id }}" title="{{ _('task.term') }}">&gt;_</a>{% endif %}</p>
 <form class="moves" method="post" action="/t/{{ t.id }}/prio"><input type="hidden" name="next" value="/">{% for n in (1,2,3) %}<button name="prio" value="{{ n }}"{% if n == t.prio %} class="on" disabled{% endif %}>{{ n }}</button>{% endfor %}</form></div>
 </article>{% endfor %}
 </div></div>{% endfor %}
@@ -122,4 +122,5 @@
   });
 })();
 </script>
+{% include 'quickadd.html' %}
 {% endblock %}

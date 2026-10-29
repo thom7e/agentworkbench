@@ -2,7 +2,7 @@ from contextlib import closing
 from datetime import datetime
 
 from fastapi import FastAPI, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -21,6 +21,12 @@ database.init()
 app = FastAPI(title="AgentWorkbench")
 app.middleware("http")(auth.middleware)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
+
+
+@app.get("/sw.js", include_in_schema=False)
+def service_worker():
+    return FileResponse(BASE / "static" / "sw.js", media_type="text/javascript",
+                        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"})
 app.include_router(admin_router)
 
 WEEKDAYS = {

@@ -46,3 +46,16 @@ def test_open_prs_are_listed(tmp_path, monkeypatch):
 def test_plain_strips_markup_and_paths():
     t = digest.plain("**Prod-Deploy** (staging → main): `.env` vorher aus dem Git-Index, `update_db.py` und mehr Text hier")
     assert "`" not in t and "*" not in t and len(t) <= 90
+
+
+def test_stale_todos_are_called_out(tmp_path, monkeypatch):
+    monkeypatch.setattr(db, "DB_PATH", str(tmp_path / "digest.db"))
+    db.init()
+    with closing(db.db()) as con:
+        con.execute("INSERT INTO projects(slug,name,live) VALUES('a','Alpha',1)")
+        con.execute("INSERT INTO todos(project,text,prio,created) VALUES('a','Alt',2,'2026-08-01 10:00')")
+        con.execute("INSERT INTO todos(project,text,prio,created) VALUES('a','Alt2',1,'2026-09-01 10:00')")
+        con.execute("INSERT INTO todos(project,text,prio,created) VALUES('a','Neu',2,'2026-10-28 10:00')")
+        con.commit()
+        text = digest.build_digest(con, TODAY, prs=[])
+    assert "<b>Länger offen</b><br>2 Aufgaben seit über 30 Tagen offen: Alpha (2)" in text

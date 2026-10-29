@@ -7,7 +7,7 @@ import html
 import re
 import sys
 from contextlib import closing
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import github
 import push
@@ -16,6 +16,7 @@ from db import db
 DAYS = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")
 HIDDEN = ("archiv", "archived", "pause")
 MAX_NORMAL = 20
+STALE_DAYS = 30
 
 
 def plain(text, n=90):
@@ -39,7 +40,7 @@ def build_digest(con, today=None, prs=None):
     prs = github.open_prs() if prs is None else prs
     marks = ",".join("?" * len(HIDDEN))
     rows = con.execute(
-        f"SELECT p.name, p.live, t.prio, t.text, t.short FROM todos t JOIN projects p ON p.slug=t.project "
+        f"SELECT p.name, p.live, t.prio, t.text, t.short, t.created FROM todos t JOIN projects p ON p.slug=t.project "
         f"WHERE t.done=0 AND t.kind='todo' AND t.prio<=2 AND p.status NOT IN ({marks}) ORDER BY t.prio, t.id", HIDDEN).fetchall()
     projects = {}
     for r in rows:
@@ -56,6 +57,14 @@ def build_digest(con, today=None, prs=None):
         top = sorted(normal, key=lambda k: (-len(projects[k]), k.lower()))
         names = ", ".join(f"{k} ({len(projects[k])})" for k in top[:MAX_NORMAL])
         out += ["", f"<b>Sonst offen</b><br>{h(names)}" + (f" und {len(top) - MAX_NORMAL} weitere" if len(top) > MAX_NORMAL else "")]
+    cutoff = (today - timedelta(days=STALE_DAYS)).strftime("%Y-%m-%d")
+    stale = {}
+    for r in rows:
+        if r["created"][:10] < cutoff:
+            stale[r["name"]] = stale.get(r["name"], 0) + 1
+    if stale:
+        names = ", ".join(f"{k} ({n})" for k, n in sorted(stale.items(), key=lambda kv: (-kv[1], kv[0].lower()))[:5])
+        out += ["", f"<b>Länger offen</b><br>{sum(stale.values())} Aufgaben seit über {STALE_DAYS} Tagen offen: {h(names)}"]
     if not projects:
         out += ["", "Nichts Dringendes in den aktiven Projekten."]
     if prs:

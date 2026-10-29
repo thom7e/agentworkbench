@@ -443,6 +443,7 @@ class TodoIn(BaseModel):
     text: str
     prio: int = 2
     kind: str = "todo"
+    short: str = ""
 
 
 class LogIn(BaseModel):
@@ -597,6 +598,7 @@ def api_search(q: str):
 class TodoPatch(BaseModel):
     project: str | None = None
     text: str | None = None
+    short: str | None = None
     prio: int | None = None
     kind: str | None = None
 
@@ -620,8 +622,8 @@ def api_add(slug: str, t: TodoIn):
     with closing(db()) as con:
         project_or_404(con, slug)
         cur = con.execute(
-            "INSERT INTO todos(project,text,kind,prio,created,source,seen) VALUES(?,?,?,?,?,'agent',0)",
-            (slug, t.text, t.kind, t.prio, now()),
+            "INSERT INTO todos(project,text,kind,prio,created,source,seen,short) VALUES(?,?,?,?,?,'agent',0,?)",
+            (slug, t.text, t.kind, t.prio, now(), t.short.strip()),
         )
         con.commit()
     return {"id": cur.lastrowid}

@@ -5,61 +5,59 @@ Telegram credentials (TG_BOT_TOKEN, TG_CHAT_ID) come from the environment or the
 """
 import json
 import os
+import re
 import sys
 import urllib.parse
 import urllib.request
 from contextlib import closing
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from db import db
 
 DAYS = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")
-STALE_DAYS = 14
-LIMIT = 8
+HIDDEN = ("archiv", "archived", "pause")
+MAX_LEN = 3900
 
 
-def clip(text, n=110):
-    text = " ".join(text.split())
-    return text if len(text) <= n else text[: n - 1] + "…"
-
-
-def section(title, lines, total=None):
-    if not lines:
-        return []
-    more = (total or len(lines)) - len(lines)
-    return [title, *lines, *([f"  … und {more} weitere"] if more > 0 else []), ""]
+def plain(text, n=90):
+    """Fallback for todos without a short title: strip markup, paths and code, keep the first sentence."""
+    text = re.sub(r"`[^`]*`", "", text)
+    text = re.sub(r"[*_#]", "", text)
+    text = re.sub(r"\s+", " ", text).strip(" -–—:;,.")
+    if len(text) > n:
+        text = re.split(r"(?<=[.!?])\s|\s[—–]\s|:\s", text, maxsplit=1)[0]
+    return text if len(text) <= n else text[: n - 1].rsplit(" ", 1)[0] + "…"
 
 
 def build_digest(con, today=None):
     today = today or datetime.now()
-    day = today.strftime("%Y-%m-%d")
-    yday = (today - timedelta(days=1)).strftime("%Y-%m-%d")
-    stale = (today - timedelta(days=STALE_DAYS)).strftime("%Y-%m-%d")
-    names = {r["slug"]: r["name"] for r in con.execute("SELECT slug, name FROM projects")}
-
-    def n(slug):
-        return names.get(slug, slug)
-
-    p1 = con.execute("SELECT project, text FROM todos WHERE done=0 AND kind='todo' AND prio=1 ORDER BY created").fetchall()
-    open_p2 = con.execute("SELECT COUNT(*) FROM todos WHERE done=0 AND kind='todo' AND prio=2").fetchone()[0]
-    done_y = con.execute("SELECT project, text FROM todos WHERE done=1 AND done_at>=? AND done_at<? ORDER BY done_at",
-                         (yday, day)).fetchall()
-    log_y = con.execute("SELECT project, text FROM activity WHERE ts>=? AND ts<? ORDER BY ts", (yday, day)).fetchall()
-    ideas = con.execute("SELECT project, text FROM todos WHERE kind='idee' AND done=0 AND created>=? ORDER BY created",
-                        (yday,)).fetchall()
-    quiet = con.execute(
-        "SELECT p.name, COUNT(t.id) c FROM projects p JOIN todos t ON t.project=p.slug AND t.done=0 AND t.kind='todo' "
-        "WHERE p.status='aktiv' AND COALESCE((SELECT MAX(ts) FROM activity a WHERE a.project=p.slug),'')<? "
-        "GROUP BY p.slug ORDER BY c DESC", (stale,)).fetchall()
-
-    out = [f"Guten Morgen! {DAYS[today.weekday()]}, {today.strftime('%d.%m.')}", ""]
-    out += section(f"Dringend (P1): {len(p1)}", [f"• {n(r['project'])}: {clip(r['text'])}" for r in p1[:LIMIT]], len(p1))
-    out += [f"Offene Aufgaben P2: {open_p2}", ""]
-    out += section(f"Gestern erledigt: {len(done_y)}", [f"✓ {n(r['project'])}: {clip(r['text'], 80)}" for r in done_y[:LIMIT]], len(done_y))
-    out += section("Verlauf gestern", [f"• {n(r['project'])}: {clip(r['text'], 80)}" for r in log_y[:LIMIT]], len(log_y))
-    out += section(f"Neue Ideen: {len(ideas)}", [f"• {n(r['project'])}: {clip(r['text'], 80)}" for r in ideas[:5]], len(ideas))
-    out += section(f"Ruhend (> {STALE_DAYS} Tage ohne Eintrag, offene Todos)", [f"• {r['name']} ({r['c']})" for r in quiet[:5]], len(quiet))
+    marks = ",".join("?" * len(HIDDEN))
+    rows = con.execute(
+        f"SELECT p.name, t.prio, t.text, t.short FROM todos t JOIN projects p ON p.slug=t.project "
+        f"WHERE t.done=0 AND t.kind='todo' AND t.prio<=2 AND p.status NOT IN ({marks})", HIDDEN).fetchall()
+    projects = {}
+    for r in rows:
+        projects.setdefault(r["name"], []).append(r)
+    order = sorted(projects, key=lambda k: (-sum(r["prio"] == 1 for r in projects[k]), k.lower()))
+    p1 = sum(r["prio"] == 1 for r in rows)
+    out = [f"Guten Morgen! {DAYS[today.weekday()]}, {today.strftime('%d.%m.')}",
+           f"{p1} dringend (!), {len(rows) - p1} normal", ""]
+    for name in order:
+        out.append(name)
+        for r in sorted(projects[name], key=lambda r: r["prio"]):
+            out.append(f"{'!' if r['prio'] == 1 else '·'} {r['short'] or plain(r['text'])}")
+        out.append("")
     return "\n".join(out).strip()
+
+
+def chunks(text):
+    parts, cur = [], ""
+    for block in text.split("\n\n"):
+        if cur and len(cur) + len(block) + 2 > MAX_LEN:
+            parts.append(cur)
+            cur = ""
+        cur = f"{cur}\n\n{block}" if cur else block
+    return [*parts, cur]
 
 
 def load_env():
@@ -74,10 +72,11 @@ def load_env():
 def send(text):
     load_env()
     token, chat = os.environ["TG_BOT_TOKEN"], os.environ["TG_CHAT_ID"]
-    data = urllib.parse.urlencode({"chat_id": chat, "text": text[:4000]}).encode()
-    with urllib.request.urlopen(f"https://api.telegram.org/bot{token}/sendMessage", data=data, timeout=20) as r:
-        if not json.load(r)["ok"]:
-            raise RuntimeError("Telegram send failed")
+    for part in chunks(text):
+        data = urllib.parse.urlencode({"chat_id": chat, "text": part}).encode()
+        with urllib.request.urlopen(f"https://api.telegram.org/bot{token}/sendMessage", data=data, timeout=20) as r:
+            if not json.load(r)["ok"]:
+                raise RuntimeError("Telegram send failed")
 
 
 if __name__ == "__main__":

@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS api_tokens (
 MIGRATIONS = (
     ("todos", "source TEXT NOT NULL DEFAULT 'user'"),
     ("todos", "seen INTEGER NOT NULL DEFAULT 1"),
+    ("todos", "short TEXT NOT NULL DEFAULT ''"),
     ("projects", "area TEXT NOT NULL DEFAULT ''"),
     ("projects", "vmid INTEGER NOT NULL DEFAULT 0"),
 )

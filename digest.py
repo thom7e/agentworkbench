@@ -20,7 +20,7 @@ DAYS = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "S
 HIDDEN = ("archiv", "archived", "pause")
 MAX_LEN = 3900
 ACTIVE_DAYS = 14
-MAX_NORMAL = 8
+MAX_NORMAL = 10
 
 
 def plain(text, n=90):
@@ -66,22 +66,20 @@ def build_digest(con, today=None, pushed=None, prs=None, url=""):
     urgent = [k for k, v in projects.items() if any(r["prio"] == 1 for r in v)]
     normal = [k for k in projects if k not in urgent]
     h = html.escape
-    out = [f"Guten Morgen, Thomas. Dein Briefing für {DAYS[today.weekday()]}, {today.strftime('%d.%m.')}."]
+    out = [f"Guten Morgen, Thomas. Dein Briefing für {DAYS[today.weekday()]}, {today.strftime('%d.%m.')}"]
     if urgent:
-        out += ["", f"<b>Dringend</b> – {len(urgent)} {'Projekt' if len(urgent) == 1 else 'Projekte'} brauchen dich zuerst:"]
+        out += ["", f"<b>Dringend</b> – {len(urgent)} {'Projekt' if len(urgent) == 1 else 'Projekte'} zuerst:"]
         for k in sorted(urgent, key=str.lower):
             p1 = [r for r in projects[k] if r["prio"] == 1]
-            rest = [r for r in projects[k] if r["prio"] != 1]
-            line = f"<b>{h(k)}</b>\n{h(phrase(p1, 3))}."
-            if rest:
-                line += f" Außerdem offen: {h(phrase(rest, 2))}."
+            more = len(projects[k]) - len(p1)
+            line = f"<b>{h(k)}</b>\n{h(phrase(p1, 2))}."
+            if more:
+                line += f" Dazu {more} weitere offen."
             out += ["", line]
     if normal:
-        out += ["", "<b>Sonst im Blick</b>"]
-        for k in sorted(normal, key=str.lower)[:MAX_NORMAL]:
-            out += ["", f"<b>{h(k)}</b>\n{h(phrase(projects[k], 3))}."]
-        if len(normal) > MAX_NORMAL:
-            out += ["", f"… und {len(normal) - MAX_NORMAL} weitere Projekte."]
+        top = sorted(normal, key=lambda k: (-len(projects[k]), k.lower()))
+        names = ", ".join(f"{k} ({len(projects[k])})" for k in top[:MAX_NORMAL])
+        out += ["", f"<b>Sonst offen</b>\n{h(names)}" + (f" und {len(top) - MAX_NORMAL} weitere" if len(top) > MAX_NORMAL else "")]
     if not projects:
         out += ["", "Nichts Dringendes in den aktiven Projekten."]
     if prs:

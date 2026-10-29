@@ -572,6 +572,16 @@ def api_note_add(slug: str, n: NoteIn):
     return {"id": cur.lastrowid}
 
 
+@app.put("/api/notes/{nid}")
+def api_note_put(nid: int, n: NoteIn):
+    with closing(db()) as con:
+        if not con.execute("SELECT 1 FROM notes WHERE id=?", (nid,)).fetchone():
+            raise HTTPException(404)
+        con.execute("UPDATE notes SET text=?, pinned=? WHERE id=?", (n.text.strip(), int(n.pinned), nid))
+        con.commit()
+    return {"ok": True}
+
+
 @app.get("/api/search", response_class=PlainTextResponse)
 def api_search(q: str):
     with closing(db()) as con:

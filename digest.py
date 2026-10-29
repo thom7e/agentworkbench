@@ -72,7 +72,7 @@ def build_digest(con, today=None, pushed=None, prs=None, url=""):
         for k in sorted(urgent, key=str.lower):
             p1 = [r for r in projects[k] if r["prio"] == 1]
             more = len(projects[k]) - len(p1)
-            line = f"<b>{h(k)}</b>\n{h(phrase(p1, 3, "dringende"))}."
+            line = f"<b>{h(k)}</b>\n{h(phrase(p1, 3, 'dringende'))}."
             if more:
                 line += f" Dazu {more} weitere offen."
             out += ["", line]

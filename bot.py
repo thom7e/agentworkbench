@@ -6,12 +6,14 @@ Only the chat configured as TG_CHAT_ID is served. Credentials come from the envi
 import json
 import os
 import time
+import urllib.error
 import urllib.request
 from contextlib import closing
 
 import digest
 from db import db
 
+MAX_BUTTONS = 95
 HELP = ("/projekte – Projekte ausführlich ins Briefing aufnehmen oder unter „Sonst offen“ schieben\n"
         "/briefing – Briefing jetzt senden")
 
@@ -20,21 +22,24 @@ def api(method, **params):
     token = os.environ["TG_BOT_TOKEN"]
     req = urllib.request.Request(f"https://api.telegram.org/bot{token}/{method}", data=json.dumps(params).encode(),
                                  headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.load(r)["result"]
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return json.load(r)["result"]
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"{method}: {e.read().decode()}") from None
 
 
 def project_rows(con):
     marks = ",".join("?" * len(digest.HIDDEN))
     return con.execute(
         f"SELECT slug, name, live FROM projects WHERE status NOT IN ({marks}) AND (live=1 OR EXISTS "
-        f"(SELECT 1 FROM todos t WHERE t.project=projects.slug AND t.done=0 AND t.kind='todo' AND t.prio<=2)) "
+        f"(SELECT 1 FROM todos t WHERE t.project=projects.slug AND t.done=0 AND t.kind='todo')) "
         f"ORDER BY live DESC, name COLLATE NOCASE", digest.HIDDEN).fetchall()
 
 
 def keyboard(con):
     return {"inline_keyboard": [[{"text": f"{'✅' if r['live'] else '▫️'} {r['name']}", "callback_data": f"t:{r['slug']}"}]
-                                for r in project_rows(con)]}
+                                for r in project_rows(con)[:MAX_BUTTONS]]}
 
 
 def toggle(con, slug):
@@ -57,10 +62,14 @@ def handle(update, chat):
         else:
             api("sendMessage", chat_id=chat, text=HELP)
     elif cb and str(cb["message"]["chat"]["id"]) == chat and cb["data"].startswith("t:"):
+        api("answerCallbackQuery", callback_query_id=cb["id"])
         with closing(db()) as con:
             toggle(con, cb["data"][2:])
-            api("editMessageReplyMarkup", chat_id=chat, message_id=cb["message"]["message_id"], reply_markup=keyboard(con))
-        api("answerCallbackQuery", callback_query_id=cb["id"], text="Umgeschaltet")
+            try:
+                api("editMessageReplyMarkup", chat_id=chat, message_id=cb["message"]["message_id"], reply_markup=keyboard(con))
+            except RuntimeError as e:
+                if "not modified" not in str(e):
+                    raise
 
 
 def main():

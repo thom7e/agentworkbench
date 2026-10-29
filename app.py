@@ -428,6 +428,15 @@ def web_status(slug: str, status: str = Form(...)):
     return RedirectResponse(f"/p/{slug}", status_code=303)
 
 
+@app.post("/p/{slug}/live")
+def web_live(slug: str, live: str = Form("")):
+    with closing(db()) as con:
+        project_or_404(con, slug)
+        con.execute("UPDATE projects SET live=? WHERE slug=?", (1 if live else 0, slug))
+        con.commit()
+    return RedirectResponse(f"/p/{slug}", status_code=303)
+
+
 @app.post("/p/{slug}/log")
 def web_log(slug: str, text: str = Form(...)):
     with closing(db()) as con:

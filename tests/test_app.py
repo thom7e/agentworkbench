@@ -220,3 +220,11 @@ def test_demo_seed_creates_a_complete_dashboard(tmp_path, monkeypatch):
     assert out.returncode == 0 and "demo-password-123" in out.stdout
     again = subprocess.run([sys.executable, "scripts/demo_seed.py"], env=env, capture_output=True, text=True)
     assert again.returncode != 0
+
+
+def test_live_toggle_shows_badge(client):
+    assert 'class="live"' not in client.get("/").text
+    assert client.post("/p/demo-app/live", data={"live": "1"}).status_code == 303
+    assert 'class="live"' in client.get("/").text and "checked" in client.get("/p/demo-app").text
+    client.post("/p/demo-app/live", data={})
+    assert 'class="live"' not in client.get("/").text

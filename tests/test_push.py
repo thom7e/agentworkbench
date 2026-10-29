@@ -33,3 +33,32 @@ def test_send_counts_and_drops_gone_subscriptions(tmp_path, monkeypatch):
     assert push.send("t", "b") == 1
     with closing(db.db()) as con:
         assert con.execute("SELECT COUNT(*) FROM push_subs").fetchone()[0] == 1
+
+
+def test_real_encryption_and_vapid_signing_path(tmp_path, monkeypatch):
+    import base64
+
+    import pywebpush
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+
+    monkeypatch.setattr(db, "DB_PATH", str(tmp_path / "p.db"))
+    db.init()
+    pub = ec.generate_private_key(ec.SECP256R1()).public_key().public_bytes(
+        serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint)
+    b64 = lambda raw: base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
+    push.subscribe({"endpoint": "https://push.example/real", "keys": {"p256dh": b64(pub), "auth": b64(b"0123456789abcdef")}})
+    seen = {}
+
+    class Resp:
+        status_code = 201
+        ok = True
+        text = ""
+
+    def fake_post(url, data=None, headers=None, **kw):
+        seen["headers"] = headers
+        return Resp()
+
+    monkeypatch.setattr(pywebpush.requests, "post", fake_post)
+    assert push.send("Titel", "Text") == 1
+    assert seen["headers"]["Authorization"].startswith("vapid ")

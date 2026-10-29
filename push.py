@@ -10,7 +10,7 @@ from pywebpush import WebPushException, webpush
 import settings
 from db import db, now
 
-CLAIMS = {"sub": "mailto:admin@localhost"}
+CLAIMS = {"sub": "mailto:admin@thinkkreativ.de"}
 
 
 def _private():
@@ -44,10 +44,12 @@ def send(title, body, url="/"):
         for s in con.execute("SELECT * FROM push_subs").fetchall():
             try:
                 webpush({"endpoint": s["endpoint"], "keys": {"p256dh": s["p256dh"], "auth": s["auth"]}},
-                        json.dumps({"title": title, "body": body, "url": url}), vapid_private_key=_private(), vapid_claims=dict(CLAIMS))
+                        json.dumps({"title": title, "body": body, "url": url}), vapid_private_key=Vapid.from_pem(_private().encode()), vapid_claims=dict(CLAIMS))
                 sent += 1
             except WebPushException as e:
                 if e.response is not None and e.response.status_code in (404, 410):
                     con.execute("DELETE FROM push_subs WHERE id=?", (s["id"],))
                     con.commit()
+                else:
+                    print("push error:", e, e.response.text if e.response is not None else "", flush=True)
     return sent

@@ -43,24 +43,19 @@ def build_digest(con, today=None, prs=None, url=""):
     prs = github.open_prs() if prs is None else prs
     marks = ",".join("?" * len(HIDDEN))
     rows = con.execute(
-        f"SELECT p.name, t.prio, t.text, t.short FROM todos t JOIN projects p ON p.slug=t.project "
+        f"SELECT p.name, p.live, t.prio, t.text, t.short FROM todos t JOIN projects p ON p.slug=t.project "
         f"WHERE t.done=0 AND t.kind='todo' AND t.prio<=2 AND p.status NOT IN ({marks}) ORDER BY t.prio, t.id", HIDDEN).fetchall()
     projects = {}
     for r in rows:
         projects.setdefault(r["name"], []).append(r)
-    urgent = [k for k, v in projects.items() if any(r["prio"] == 1 for r in v)]
+    urgent = [k for k, v in projects.items() if v[0]["live"]]
     normal = [k for k in projects if k not in urgent]
     h = html.escape
     out = [f"Guten Morgen, Thomas. Dein Briefing für {DAYS[today.weekday()]}, {today.strftime('%d.%m.')}"]
     if urgent:
-        out += ["", f"<b>Dringend</b> – {len(urgent)} {'Projekt' if len(urgent) == 1 else 'Projekte'} zuerst:"]
-        for k in sorted(urgent, key=str.lower):
-            p1 = [r for r in projects[k] if r["prio"] == 1]
-            more = len(projects[k]) - len(p1)
-            line = f"<b>{h(k)}</b>\n{h(phrase(p1, 3, 'dringende'))}."
-            if more:
-                line += f" Dazu {more} weitere offen."
-            out += ["", line]
+        out += ["", f"<b>Dringend</b> – live oder beim Kunden ({len(urgent)}):"]
+        for k in sorted(urgent, key=lambda k: (-sum(r["prio"] == 1 for r in projects[k]), k.lower())):
+            out += ["", f"<b>{h(k)}</b>\n{h(phrase(projects[k], 3))}."]
     if normal:
         top = sorted(normal, key=lambda k: (-len(projects[k]), k.lower()))
         names = ", ".join(f"{k} ({len(projects[k])})" for k in top[:MAX_NORMAL])

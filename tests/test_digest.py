@@ -9,8 +9,8 @@ TODAY = datetime(2026, 10, 29, 7, 0)
 
 def seed(con):
     con.execute("INSERT INTO projects(slug,name,repo) VALUES('a','Alpha','o/alpha')")
-    con.execute("INSERT INTO projects(slug,name,repo) VALUES('b','Beta','o/beta')")
-    con.execute("INSERT INTO projects(slug,name,repo) VALUES('c','Gamma','o/gamma')")
+    con.execute("INSERT INTO projects(slug,name,repo,live) VALUES('b','Beta','o/beta',1)")
+    con.execute("INSERT INTO projects(slug,name,repo,live) VALUES('c','Gamma','o/gamma',1)")
     con.execute("INSERT INTO projects(slug,name,status,repo) VALUES('z','Zeta','archiv','o/zeta')")
     con.execute("INSERT INTO todos(project,text,prio,created) VALUES('a','Normales',2,'2026-10-20 10:00')")
     con.execute("INSERT INTO todos(project,text,short,prio,created) VALUES('b','**Lang** `x`: Details',"
@@ -29,7 +29,7 @@ def test_digest_all_active_projects_p1_first(tmp_path, monkeypatch):
         seed(con)
         text = digest.build_digest(con, TODAY, prs=[], url="http://dash")
     assert "Guten Morgen, Thomas" in text and "Donnerstag, 29.10." in text
-    assert "<b>Dringend</b>" in text and "<b>Beta</b>\nDringendes erledigen. Dazu 1 weitere offen." in text
+    assert "<b>Dringend</b>" in text and "<b>Beta</b>\nDringendes erledigen; Zweites." in text
     assert text.index("Beta") < text.index("Alpha") and "<b>Sonst offen</b>\nAlpha (1)" in text
     assert "<b>Gamma</b>" in text and "Zeta" not in text and "Fertig" not in text
     assert '<a href="http://dash">Mehr im Dashboard</a>' in text

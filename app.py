@@ -509,6 +509,7 @@ class ProjectPatch(BaseModel):
     repo: str | None = None
     wiki: str | None = None
     vmid: int | None = None
+    live: int | None = None
 
 
 @app.patch("/api/projects/{slug}")

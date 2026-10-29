@@ -10,6 +10,7 @@ import auth
 import db as database
 import github
 import proxmox
+import push
 from i18n import t as tr
 import settings
 from admin import router as admin_router
@@ -21,6 +22,22 @@ database.init()
 app = FastAPI(title="AgentWorkbench")
 app.middleware("http")(auth.middleware)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
+
+
+@app.get("/push/key")
+def push_key():
+    return {"key": push.public_key()}
+
+
+@app.post("/push/subscribe")
+async def push_subscribe(request: Request):
+    push.subscribe(await request.json())
+    return {"ok": True}
+
+
+@app.post("/push/test")
+def push_test():
+    return {"sent": push.send("AgentWorkbench", "Test-Benachrichtigung funktioniert.")}
 
 
 @app.get("/sw.js", include_in_schema=False)

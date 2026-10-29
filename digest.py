@@ -14,6 +14,7 @@ from contextlib import closing
 from datetime import datetime
 
 import github
+import push
 from db import db
 
 DAYS = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")
@@ -103,4 +104,9 @@ if __name__ == "__main__":
     with closing(db()) as con:
         load_env()
         text = build_digest(con, url=os.environ.get("DASHBOARD_URL", ""))
-    print(text) if "--print" in sys.argv else send(text)
+    if "--print" in sys.argv:
+        print(text)
+    else:
+        send(text)
+        plain_lines = [re.sub(r"<[^>]+>", "", l) for l in text.splitlines() if l.strip()]
+        push.send("Morgen-Briefing", " ".join(plain_lines[1:3]), "/")

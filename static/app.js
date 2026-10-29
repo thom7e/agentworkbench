@@ -32,6 +32,26 @@
     });
   });
 
+  // Push notifications (iOS: only for the installed home-screen app)
+  var pb = document.getElementById('push-btn');
+  if (pb && 'serviceWorker' in navigator && 'PushManager' in window && Notification.permission !== 'granted') {
+    pb.hidden = false;
+    pb.addEventListener('click', function () {
+      Notification.requestPermission().then(function (perm) {
+        if (perm !== 'granted') return;
+        return navigator.serviceWorker.ready.then(function (reg) {
+          return fetch('/push/key').then(function (r) { return r.json(); }).then(function (k) {
+            var pad = '='.repeat((4 - k.key.length % 4) % 4), b64 = (k.key + pad).replace(/-/g, '+').replace(/_/g, '/');
+            var key = Uint8Array.from(atob(b64), function (c) { return c.charCodeAt(0); });
+            return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+          });
+        }).then(function (sub) {
+          return fetch('/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) });
+        }).then(function () { pb.hidden = true; return fetch('/push/test', { method: 'POST' }); });
+      });
+    });
+  }
+
   // Quick add (works offline: queued entries are sent as soon as the connection is back)
   var dlg = document.getElementById('qa');
   if (!dlg) return;

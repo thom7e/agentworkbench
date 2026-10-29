@@ -11,6 +11,19 @@ self.addEventListener('activate', (e) => {
     .then(() => self.clients.claim()));
 });
 
+self.addEventListener('push', (e) => {
+  const d = e.data ? e.data.json() : {};
+  e.waitUntil(self.registration.showNotification(d.title || 'AgentWorkbench', { body: d.body || '', data: { url: d.url || '/' }, icon: '/static/icon-192.png' }));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(clients.matchAll({ type: 'window' }).then((all) => {
+    const win = all.find((c) => 'focus' in c);
+    return win ? win.focus() : clients.openWindow(e.notification.data.url);
+  }));
+});
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;

@@ -244,3 +244,4 @@ button.act:hover{background:var(--hover)}
 .qa-btns{display:flex;justify-content:flex-end;gap:10px}.qa-btns button{font:inherit;min-height:44px;padding:0 16px;border-radius:6px}
 .term{display:none;font-family:monospace;font-size:12px;margin-left:6px;padding:0 6px;border:1px solid var(--line);border-radius:4px;text-decoration:none;color:var(--mut)}
 .desk .term{display:inline-block}.term:hover{color:var(--accent);border-color:var(--accent)}
+.push-btn{position:fixed;left:max(18px,env(safe-area-inset-left));bottom:max(18px,env(safe-area-inset-bottom));width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--bg);font-size:20px;cursor:pointer;z-index:20}

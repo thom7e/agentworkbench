@@ -18,6 +18,7 @@ import urllib.request
 from contextlib import closing
 
 import digest
+import push
 from db import db, now
 
 TIMEOUT = 15
@@ -102,6 +103,7 @@ def run_all(con, dry=False):
 def notify(ticked):
     lines = [f"✓ {len(ticked)} Aufgabe(n) automatisch abgehakt:"] + [html.escape(f"• {n}: {l}") for n, l in ticked]
     digest.send("\n".join(lines))
+    push.send("Automatisch abgehakt", ", ".join(label for _, label in ticked), "/")
 
 
 if __name__ == "__main__":

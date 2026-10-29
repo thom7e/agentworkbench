@@ -11,7 +11,7 @@ import sys
 import urllib.parse
 import urllib.request
 from contextlib import closing
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import github
 from db import db
@@ -19,8 +19,7 @@ from db import db
 DAYS = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")
 HIDDEN = ("archiv", "archived", "pause")
 MAX_LEN = 3900
-ACTIVE_DAYS = 14
-MAX_NORMAL = 10
+MAX_NORMAL = 20
 
 
 def plain(text, n=90):
@@ -39,30 +38,16 @@ def phrase(rows, limit, tail="weitere"):
     return text + (f" (+{len(items) - limit} {tail})" if len(items) > limit else "")
 
 
-def active_slugs(con, today, pushed, prs):
-    """Projects with a push or a log entry in the last ACTIVE_DAYS days, or with an open pull request."""
-    since = (today - timedelta(days=ACTIVE_DAYS)).strftime("%Y-%m-%d")
-    out = {r["project"] for r in con.execute("SELECT DISTINCT project FROM activity WHERE ts>=?", (since,))}
-    for p in con.execute("SELECT slug, repo FROM projects WHERE repo!=''"):
-        repo = p["repo"].lower()
-        if pushed.get(repo, "")[:10] >= since or any(pr["repo"].lower() == repo for pr in prs):
-            out.add(p["slug"])
-    return out
-
-
-def build_digest(con, today=None, pushed=None, prs=None, url=""):
+def build_digest(con, today=None, prs=None, url=""):
     today = today or datetime.now()
-    pushed = github.pushed_map() if pushed is None else pushed
     prs = github.open_prs() if prs is None else prs
-    live = active_slugs(con, today, pushed, prs)
     marks = ",".join("?" * len(HIDDEN))
     rows = con.execute(
-        f"SELECT p.slug, p.name, t.prio, t.text, t.short FROM todos t JOIN projects p ON p.slug=t.project "
+        f"SELECT p.name, t.prio, t.text, t.short FROM todos t JOIN projects p ON p.slug=t.project "
         f"WHERE t.done=0 AND t.kind='todo' AND t.prio<=2 AND p.status NOT IN ({marks}) ORDER BY t.prio, t.id", HIDDEN).fetchall()
     projects = {}
     for r in rows:
-        if r["slug"] in live:
-            projects.setdefault(r["name"], []).append(r)
+        projects.setdefault(r["name"], []).append(r)
     urgent = [k for k, v in projects.items() if any(r["prio"] == 1 for r in v)]
     normal = [k for k in projects if k not in urgent]
     h = html.escape

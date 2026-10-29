@@ -22,27 +22,26 @@ def seed(con):
     con.commit()
 
 
-def test_digest_only_active_projects_p1_first(tmp_path, monkeypatch):
+def test_digest_all_active_projects_p1_first(tmp_path, monkeypatch):
     monkeypatch.setattr(db, "DB_PATH", str(tmp_path / "digest.db"))
     db.init()
     with closing(db.db()) as con:
         seed(con)
-        pushed = {"o/alpha": "2026-10-27T10:00:00Z", "o/beta": "2026-10-28T10:00:00Z", "o/zeta": "2026-10-28T10:00:00Z"}
-        text = digest.build_digest(con, TODAY, pushed=pushed, prs=[], url="http://dash")
+        text = digest.build_digest(con, TODAY, prs=[], url="http://dash")
     assert "Guten Morgen, Thomas" in text and "Donnerstag, 29.10." in text
     assert "<b>Dringend</b>" in text and "<b>Beta</b>\nDringendes erledigen. Dazu 1 weitere offen." in text
     assert text.index("Beta") < text.index("Alpha") and "<b>Sonst offen</b>\nAlpha (1)" in text
-    assert "Gamma" not in text and "Zeta" not in text and "Fertig" not in text
+    assert "<b>Gamma</b>" in text and "Zeta" not in text and "Fertig" not in text
     assert '<a href="http://dash">Mehr im Dashboard</a>' in text
 
 
-def test_open_pr_makes_quiet_project_active(tmp_path, monkeypatch):
+def test_open_prs_are_listed(tmp_path, monkeypatch):
     monkeypatch.setattr(db, "DB_PATH", str(tmp_path / "digest.db"))
     db.init()
     with closing(db.db()) as con:
         seed(con)
-        text = digest.build_digest(con, TODAY, pushed={}, prs=[{"repo": "o/gamma", "title": "x"}])
-    assert "Gamma" in text and "<b>Pull Requests</b>: gamma" in text
+        text = digest.build_digest(con, TODAY, prs=[{"repo": "o/gamma", "title": "x"}])
+    assert "<b>Pull Requests</b>: gamma" in text
 
 
 def test_plain_strips_markup_and_paths():

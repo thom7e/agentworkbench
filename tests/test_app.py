@@ -238,3 +238,11 @@ def test_pwa_files_and_quick_add(client):
     assert client.post("/p/demo-app/add", data={"text": "Per Schnell-Eintrag", "prio": "2", "kind": "todo"}).status_code == 303
     assert "Per Schnell-Eintrag" in client.get("/").text
     assert "agentworkbench://run?project=demo-app" in client.get("/").text
+
+
+def test_briefing_page_and_toggle_returns_there(client):
+    page = client.get("/briefing").text
+    assert "Guten Morgen, Thomas" in page and "brief-projects" in page and 'action="/p/demo-app/live"' in page
+    r = client.post("/p/demo-app/live", data={"live": "1", "next": "/briefing"})
+    assert r.status_code == 303 and r.headers["location"] == "/briefing"
+    client.post("/p/demo-app/live", data={"next": "/briefing"})

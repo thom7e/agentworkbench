@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><a href="/">← {{ site_title() }}</a></div>
+<section class="brief">
+{% for para in text.split('\n\n') %}<p>{{ para|safe }}</p>{% endfor %}
+</section>
+<section>
+<h2>{{ _('briefing.projects') }}</h2>
+<p class="hint2">{{ _('live.hint') }}</p>
+<div class="brief-projects">
+{% for p in projects %}<form method="post" action="/p/{{ p.slug }}/live"><input type="hidden" name="next" value="/briefing"><label><input type="checkbox" name="live" value="1"{% if p.live %} checked{% endif %} onchange="this.form.submit()"> {{ p.name }}</label></form>{% endfor %}
+</div>
+</section>
+{% endblock %}

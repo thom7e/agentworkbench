@@ -27,12 +27,11 @@ def test_digest_all_active_projects_p1_first(tmp_path, monkeypatch):
     db.init()
     with closing(db.db()) as con:
         seed(con)
-        text = digest.build_digest(con, TODAY, prs=[], url="http://dash")
+        text = digest.build_digest(con, TODAY, prs=[])
     assert "Guten Morgen, Thomas" in text and "Donnerstag, 29.10." in text
-    assert "<b>Dringend</b>" in text and "<b>Beta</b>\nDringendes erledigen; Zweites." in text
-    assert text.index("Beta") < text.index("Alpha") and "<b>Sonst offen</b>\nAlpha (1)" in text
+    assert "<b>Dringend</b>" in text and "<b>Beta</b><br>Dringendes erledigen; Zweites." in text
+    assert text.index("Beta") < text.index("Alpha") and "<b>Sonst offen</b><br>Alpha (1)" in text
     assert "<b>Gamma</b>" in text and "Zeta" not in text and "Fertig" not in text
-    assert '<a href="http://dash">Mehr im Dashboard</a>' in text
 
 
 def test_open_prs_are_listed(tmp_path, monkeypatch):

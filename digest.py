@@ -1,15 +1,11 @@
-"""Daily morning digest: builds a plain-text summary from the dashboard DB and sends it via Telegram.
+"""Daily morning briefing: builds a short summary from the dashboard DB and sends it as a web push notification.
 
 Usage: python digest.py [--print]   (--print only prints, nothing is sent)
-Telegram credentials (TG_BOT_TOKEN, TG_CHAT_ID) come from the environment or the file in DIGEST_ENV.
+The notification opens /briefing, which renders the same text and lets you choose which projects are shown in detail.
 """
 import html
-import json
-import os
 import re
 import sys
-import urllib.parse
-import urllib.request
 from contextlib import closing
 from datetime import datetime
 
@@ -19,7 +15,6 @@ from db import db
 
 DAYS = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")
 HIDDEN = ("archiv", "archived", "pause")
-MAX_LEN = 3900
 MAX_NORMAL = 20
 
 
@@ -39,7 +34,7 @@ def phrase(rows, limit, tail="weitere"):
     return text + (f" (+{len(items) - limit} {tail})" if len(items) > limit else "")
 
 
-def build_digest(con, today=None, prs=None, url=""):
+def build_digest(con, today=None, prs=None):
     today = today or datetime.now()
     prs = github.open_prs() if prs is None else prs
     marks = ",".join("?" * len(HIDDEN))
@@ -56,57 +51,33 @@ def build_digest(con, today=None, prs=None, url=""):
     if urgent:
         out += ["", f"<b>Dringend</b> – live oder beim Kunden ({len(urgent)}):"]
         for k in sorted(urgent, key=lambda k: (-sum(r["prio"] == 1 for r in projects[k]), k.lower())):
-            out += ["", f"<b>{h(k)}</b>\n{h(phrase(projects[k], 3))}."]
+            out += ["", f"<b>{h(k)}</b><br>{h(phrase(projects[k], 3))}."]
     if normal:
         top = sorted(normal, key=lambda k: (-len(projects[k]), k.lower()))
         names = ", ".join(f"{k} ({len(projects[k])})" for k in top[:MAX_NORMAL])
-        out += ["", f"<b>Sonst offen</b>\n{h(names)}" + (f" und {len(top) - MAX_NORMAL} weitere" if len(top) > MAX_NORMAL else "")]
+        out += ["", f"<b>Sonst offen</b><br>{h(names)}" + (f" und {len(top) - MAX_NORMAL} weitere" if len(top) > MAX_NORMAL else "")]
     if not projects:
         out += ["", "Nichts Dringendes in den aktiven Projekten."]
     if prs:
         out += ["", f"<b>Pull Requests</b>: {h(', '.join(sorted({pr['repo'].split('/')[-1] for pr in prs})))}"]
-    if url:
-        out += ["", f'<a href="{h(url)}">Mehr im Dashboard</a>']
     return "\n".join(out)
 
 
-def chunks(text):
-    parts, cur = [], ""
-    for block in text.split("\n\n"):
-        if cur and len(cur) + len(block) + 2 > MAX_LEN:
-            parts.append(cur)
-            cur = ""
-        cur = f"{cur}\n\n{block}" if cur else block
-    return [*parts, cur]
+def briefing_projects(con):
+    """Projects offered in the briefing settings: live ones plus everything with open todos."""
+    marks = ",".join("?" * len(HIDDEN))
+    return con.execute(
+        f"SELECT slug, name, live FROM projects WHERE status NOT IN ({marks}) AND (live=1 OR EXISTS "
+        f"(SELECT 1 FROM todos t WHERE t.project=projects.slug AND t.done=0 AND t.kind='todo')) "
+        f"ORDER BY live DESC, name COLLATE NOCASE", HIDDEN).fetchall()
 
 
-def load_env():
-    path = os.environ.get("DIGEST_ENV", "/etc/dashboard-digest.env")
-    if os.path.exists(path):
-        for line in open(path, encoding="utf-8"):
-            if "=" in line and not line.startswith("#"):
-                k, v = line.strip().split("=", 1)
-                os.environ.setdefault(k, v)
-
-
-def send(text):
-    load_env()
-    token, chat = os.environ["TG_BOT_TOKEN"], os.environ["TG_CHAT_ID"]
-    for part in chunks(text):
-        data = urllib.parse.urlencode({"chat_id": chat, "text": part, "parse_mode": "HTML",
-                                       "disable_web_page_preview": "true"}).encode()
-        with urllib.request.urlopen(f"https://api.telegram.org/bot{token}/sendMessage", data=data, timeout=20) as r:
-            if not json.load(r)["ok"]:
-                raise RuntimeError("Telegram send failed")
+def push_briefing(text):
+    lines = [re.sub(r"<[^>]+>", "", line) for line in text.replace("<br>", " – ").splitlines() if line.strip()]
+    return push.send("Morgen-Briefing", " ".join(lines[1:3]), "/briefing")
 
 
 if __name__ == "__main__":
     with closing(db()) as con:
-        load_env()
-        text = build_digest(con, url=os.environ.get("DASHBOARD_URL", ""))
-    if "--print" in sys.argv:
-        print(text)
-    else:
-        send(text)
-        plain_lines = [re.sub(r"<[^>]+>", "", l) for l in text.splitlines() if l.strip()]
-        push.send("Morgen-Briefing", " ".join(plain_lines[1:3]), "/")
+        text = build_digest(con)
+    print(text) if "--print" in sys.argv else push_briefing(text)

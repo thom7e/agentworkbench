@@ -8,16 +8,13 @@ A spec is a JSON object (or a list of objects, all must pass):
 
 Usage: python checks.py [--dry]   (--dry reports results without ticking anything off)
 """
-import html
 import json
-import os
 import socket
 import sys
 import urllib.error
 import urllib.request
 from contextlib import closing
 
-import digest
 import push
 from db import db, now
 
@@ -101,15 +98,11 @@ def run_all(con, dry=False):
 
 
 def notify(ticked):
-    lines = [f"✓ {len(ticked)} Aufgabe(n) automatisch abgehakt:"] + [html.escape(f"• {n}: {l}") for n, l in ticked]
-    digest.send("\n".join(lines))
-    push.send("Automatisch abgehakt", ", ".join(label for _, label in ticked), "/")
+    push.send(f"{len(ticked)} Aufgabe(n) automatisch abgehakt", ", ".join(label for _, label in ticked), "/")
 
 
 if __name__ == "__main__":
     with closing(db()) as con:
         done = run_all(con, dry="--dry" in sys.argv)
     if done:
-        digest.load_env()
-        if os.environ.get("TG_BOT_TOKEN"):
-            notify(done)
+        notify(done)

@@ -8,7 +8,7 @@
 <span class="age">{{ last|ago }}</span>
 </a>{% endmacro %}
 <div class="top"><span class="brand">{{ site_title() }}</span>
-<nav>{% for s in ('aktiv','pause','archiv') %}<a href="/?status={{ s }}&sort={{ sort }}"{% if s == status %} aria-current="page"{% endif %}>{{ _('status.' ~ s) }}</a>{% endfor %}<a href="/admin">{{ _('admin') }}</a><form class="inline" method="post" action="/logout"><button class="linklike">{{ _('logout') }}</button></form></nav></div>
+<nav>{% for s in ('aktiv','pause','archiv') %}<a href="/?status={{ s }}&sort={{ sort }}"{% if s == status %} aria-current="page"{% endif %}>{{ _('status.' ~ s) }}</a>{% endfor %}<a href="/briefing">{{ _('nav.briefing') }}</a><a href="/admin">{{ _('admin') }}</a><form class="inline" method="post" action="/logout"><button class="linklike">{{ _('logout') }}</button></form></nav></div>
 <div class="hello"><h1>{{ today }}</h1>
 <form class="searchbox" method="get" action="/search"><input type="search" name="q" placeholder="{{ _('idx.search.ph') }}" aria-label="{{ _('search.title') }}"></form>
 <p>{{ _('idx.summary', n=focus|length, m=open_total, status=_('status.' ~ status)) }}</p></div>

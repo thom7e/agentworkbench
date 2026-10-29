@@ -33,10 +33,10 @@ def plain(text, n=90):
     return text if len(text) <= n else text[: n - 1].rsplit(" ", 1)[0] + "…"
 
 
-def phrase(rows, limit):
+def phrase(rows, limit, tail="weitere"):
     items = [r["short"] or plain(r["text"]) for r in rows]
     text = "; ".join(items[:limit])
-    return text + (f" (+{len(items) - limit} weitere)" if len(items) > limit else "")
+    return text + (f" (+{len(items) - limit} {tail})" if len(items) > limit else "")
 
 
 def active_slugs(con, today, pushed, prs):
@@ -72,7 +72,7 @@ def build_digest(con, today=None, pushed=None, prs=None, url=""):
         for k in sorted(urgent, key=str.lower):
             p1 = [r for r in projects[k] if r["prio"] == 1]
             more = len(projects[k]) - len(p1)
-            line = f"<b>{h(k)}</b>\n{h(phrase(p1, 2))}."
+            line = f"<b>{h(k)}</b>\n{h(phrase(p1, 3, "dringende"))}."
             if more:
                 line += f" Dazu {more} weitere offen."
             out += ["", line]

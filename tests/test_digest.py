@@ -31,8 +31,7 @@ def test_digest_only_active_projects_p1_first(tmp_path, monkeypatch):
         text = digest.build_digest(con, TODAY, pushed=pushed, prs=[], url="http://dash")
     assert "Guten Morgen, Thomas" in text and "Donnerstag, 29.10." in text
     assert "<b>Dringend</b>" in text and "<b>Beta</b>\nDringendes erledigen. Dazu 1 weitere offen." in text
-    assert text.index("Beta") < text.index("Alpha") and "<b>Sonst offen</b>
-Alpha (1)" in text
+    assert text.index("Beta") < text.index("Alpha") and "<b>Sonst offen</b>\nAlpha (1)" in text
     assert "Gamma" not in text and "Zeta" not in text and "Fertig" not in text
     assert '<a href="http://dash">Mehr im Dashboard</a>' in text
 

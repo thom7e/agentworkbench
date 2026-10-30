@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/style.css?v={{ asset_v }}">
-{% set design = request.cookies.get('design') if request is defined else 'classic' %}{% set fresh = design not in ('classic', 'op') %}{% set op = design == 'op' %}
+{% set design = (request.cookies.get('design') or 'op') if request is defined else 'classic' %}{% set fresh = design == 'fresh' %}{% set op = design == 'op' %}
 {% if op %}<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/static/op.css?v={{ asset_v }}">{% endif %}
 {% if fresh %}<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400..800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/static/fresh.css?v={{ asset_v }}">{% endif %}
 </head><body{% if fresh or op %} class="has-side"{% endif %}>{% if (fresh or op) and request.url.path != '/login' and request.url.path != '/setup' %}{% include 'sidebar.html' %}{% endif %}<div class="wrap">

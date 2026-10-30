@@ -325,24 +325,18 @@ def test_passkey_register_and_login_roundtrip(client):
     assert client.post(f"/passkey/{pid}/delete").status_code == 204
 
 
-def test_fresh_design_is_default_and_classic_is_a_cookie(client):
+def test_openproject_style_is_default_others_are_cookies(client):
     page = client.get("/").text
-    assert 'class="has-side"' in page and 'class="side"' in page and "/static/fresh.css?v=" in page
+    assert "/static/op.css?v=" in page and "/static/fresh.css" not in page and 'class="side"' in page
+    assert client.get("/design/fresh").status_code == 303
+    assert "/static/fresh.css?v=" in client.get("/").text
     assert client.get("/design/classic").status_code == 303
     assert 'class="side"' not in client.get("/").text
-    client.get("/design/fresh")
-    assert 'class="side"' in client.get("/").text
+    client.get("/design/op")
+    assert "/static/op.css?v=" in client.get("/").text
 
 
 def test_project_page_has_tabs(client):
     page = client.get("/p/demo-app").text
     for name in ("tasks", "notes", "docs", "log"):
         assert f'data-ptab-link="{name}"' in page and f'data-ptab="{name}"' in page
-
-
-def test_openproject_style_theme_is_selectable(client):
-    assert client.get("/design/op").status_code == 303
-    page = client.get("/").text
-    assert "/static/op.css?v=" in page and "/static/fresh.css" not in page and 'class="side"' in page
-    client.get("/design/fresh")
-    assert "/static/fresh.css?v=" in client.get("/").text

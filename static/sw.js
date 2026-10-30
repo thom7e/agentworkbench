@@ -18,9 +18,11 @@ self.addEventListener('push', (e) => {
 
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
-  e.waitUntil(clients.matchAll({ type: 'window' }).then((all) => {
+  const url = new URL((e.notification.data && e.notification.data.url) || '/', self.location.origin).href;
+  e.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then((all) => {
     const win = all.find((c) => 'focus' in c);
-    return win ? win.focus() : clients.openWindow(e.notification.data.url);
+    if (!win) return clients.openWindow(url);
+    return win.focus().then((c) => (c || win).navigate(url)).catch(() => clients.openWindow(url));
   }));
 });
 

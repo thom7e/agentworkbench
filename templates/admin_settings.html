@@ -15,4 +15,10 @@
 <label class="check"><input type="checkbox" name="proxmox_verify_tls" value="1"{% if s.proxmox_verify_tls == '1' %} checked{% endif %}> {{ t('set.px.verify') }}</label>
 <div><button class="go">{{ t('save') }}</button></div>
 </form>
+<section class="sheet"><h2>{{ t('pk.title') }}</h2><p class="hint2">{{ t('pk.help') }}</p>
+{% for k in passkeys %}<p class="pk-row">{{ k.name }} · {{ k.created[:10] }}{% if k.last_used %} · {{ t('pk.used') }} {{ k.last_used[:10] }}{% endif %} <button type="button" class="linklike" onclick="fetch('/passkey/{{ k.id }}/delete',{method:'POST'}).then(function(){location.reload()})">{{ t('pk.delete') }}</button></p>{% else %}<p>{{ t('pk.none') }}</p>{% endfor %}
+<p><input id="pk-name" placeholder="{{ t('pk.name') }}" maxlength="60"> <button type="button" class="go" id="pk-add">{{ t('pk.add') }}</button></p>
+<p class="notice err" id="pk-err" hidden>{{ t('pk.fail') }}</p></section>
+<script src="/static/passkey.js"></script>
+<script>if(window.PublicKeyCredential){document.getElementById('pk-add').onclick=function(){window.awbPasskey.register(document.getElementById('pk-name').value||'Passkey').catch(function(){document.getElementById('pk-err').hidden=false})}}else{document.getElementById('pk-add').disabled=true}</script>
 {% endblock %}

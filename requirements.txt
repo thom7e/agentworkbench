@@ -6,3 +6,4 @@ itsdangerous>=2.2
 markdown>=3.5
 nh3>=0.2
 pywebpush>=2.0
+webauthn>=2.0

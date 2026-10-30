@@ -4,6 +4,7 @@ import json
 from contextlib import closing
 
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
 from py_vapid import Vapid
 from pywebpush import WebPushException, webpush
 
@@ -16,9 +17,9 @@ CLAIMS = {"sub": "mailto:admin@thinkkreativ.de"}
 def _private():
     pem = settings.get("vapid_private")
     if not pem:
-        v = Vapid()
-        v.generate_keys()
-        pem = v.private_pem().decode()
+        key = ec.generate_private_key(ec.SECP256R1())
+        pem = key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+                                serialization.NoEncryption()).decode()
         settings.put("vapid_private", pem)
     return pem
 

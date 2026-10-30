@@ -6,5 +6,8 @@
 <form class="fgrid" method="post" action="/login">
 <input type="hidden" name="next" value="{{ next }}" data-fixed>
 <label>{{ t('password') }}<input type="password" name="password" required autofocus autocomplete="current-password"></label>
-<div><button class="go">{{ t('login.submit') }}</button></div></form></div>
+<div><button class="go">{{ t('login.submit') }}</button></div></form>
+<div id="pk-box" hidden><p class="hint2">{{ t('login.or') }}</p><button type="button" class="go" id="pk-login">{{ t('login.passkey') }}</button><p class="notice err" id="pk-err" hidden>{{ t('login.passkey.fail') }}</p></div></div>
+<script src="/static/passkey.js"></script>
+<script>if(window.PublicKeyCredential){document.getElementById('pk-box').hidden=false;document.getElementById('pk-login').onclick=function(){window.awbPasskey.login(document.querySelector('input[name=next]').value).catch(function(){document.getElementById('pk-err').hidden=false})}}</script>
 {% endblock %}

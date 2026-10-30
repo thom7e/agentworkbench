@@ -15,6 +15,7 @@ import push
 from i18n import t as tr
 import settings
 from admin import router as admin_router
+from passkeys import router as passkey_router
 from db import BASE, db, now
 from render import ago_days, templates
 
@@ -46,6 +47,7 @@ def service_worker():
     return FileResponse(BASE / "static" / "sw.js", media_type="text/javascript",
                         headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"})
 app.include_router(admin_router)
+app.include_router(passkey_router)
 
 WEEKDAYS = {
     "de": ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],

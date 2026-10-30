@@ -246,3 +246,79 @@ def test_briefing_page_and_toggle_returns_there(client):
     r = client.post("/p/demo-app/live", data={"live": "1", "next": "/briefing"})
     assert r.status_code == 303 and r.headers["location"] == "/briefing"
     client.post("/p/demo-app/live", data={"next": "/briefing"})
+
+
+class SoftAuthenticator:
+    """Minimal software passkey (ES256, 'none' attestation) to run the real WebAuthn verification in tests."""
+
+    def __init__(self, rp_id="testserver"):
+        import hashlib
+
+        from cryptography.hazmat.primitives.asymmetric import ec
+
+        self.key = ec.generate_private_key(ec.SECP256R1())
+        self.cred_id = b"cred-" + hashlib.sha256(rp_id.encode()).digest()[:10]
+        self.rp_hash = hashlib.sha256(rp_id.encode()).digest()
+        self.count = 0
+
+    @staticmethod
+    def b64(raw):
+        import base64
+
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
+
+    def client_data(self, kind, challenge_b64, origin="https://testserver"):
+        import json
+
+        return json.dumps({"type": kind, "challenge": challenge_b64, "origin": origin}).encode()
+
+    def register(self, challenge_b64):
+        import cbor2
+
+        nums = self.key.public_key().public_numbers()
+        cose = cbor2.dumps({1: 2, 3: -7, -1: 1, -2: nums.x.to_bytes(32, "big"), -3: nums.y.to_bytes(32, "big")})
+        auth_data = self.rp_hash + bytes([0x45]) + (0).to_bytes(4, "big") + bytes(16) + len(self.cred_id).to_bytes(2, "big") + self.cred_id + cose
+        att = cbor2.dumps({"fmt": "none", "attStmt": {}, "authData": auth_data})
+        return {"id": self.b64(self.cred_id), "rawId": self.b64(self.cred_id), "type": "public-key",
+                "response": {"clientDataJSON": self.b64(self.client_data("webauthn.create", challenge_b64)), "attestationObject": self.b64(att)}}
+
+    def assert_(self, challenge_b64):
+        import hashlib
+
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import ec
+
+        self.count += 1
+        auth_data = self.rp_hash + bytes([0x05]) + self.count.to_bytes(4, "big")
+        cd = self.client_data("webauthn.get", challenge_b64)
+        sig = self.key.sign(auth_data + hashlib.sha256(cd).digest(), ec.ECDSA(hashes.SHA256()))
+        return {"id": self.b64(self.cred_id), "rawId": self.b64(self.cred_id), "type": "public-key",
+                "response": {"clientDataJSON": self.b64(cd), "authenticatorData": self.b64(auth_data), "signature": self.b64(sig)}}
+
+
+def test_passkey_register_and_login_roundtrip(client):
+    anon = TestClient(app, follow_redirects=False)
+    assert anon.get("/passkey/register/options").status_code == 303  # needs a session
+    dev = SoftAuthenticator()
+    opts = client.get("/passkey/register/options").json()
+    assert opts["rp"]["id"] == "testserver" and opts["authenticatorSelection"]["residentKey"] == "required"
+    assert client.post("/passkey/register/verify", json={"credential": {"id": "x"}}).status_code == 400
+    opts = client.get("/passkey/register/options").json()
+    r = client.post("/passkey/register/verify", json={"credential": dev.register(opts["challenge"]), "name": "Test-Gerät"})
+    assert r.status_code == 200, r.text
+    assert "Test-Gerät" in client.get("/admin/settings").text
+
+    opts = anon.get("/passkey/login/options").json()  # public
+    r = anon.post("/passkey/login/verify", json={"credential": dev.assert_(opts["challenge"])})
+    assert r.status_code == 200 and "session" in r.cookies
+    assert anon.get("/").status_code == 200
+    # replaying the same assertion must fail (challenge is bound to the cookie, counter must rise)
+    other = TestClient(app, follow_redirects=False)
+    other.get("/passkey/login/options")
+    assert other.post("/passkey/login/verify", json={"credential": dev.assert_("AAAA")}).status_code in (400, 401)
+    stranger = TestClient(app, follow_redirects=False)
+    opts = stranger.get("/passkey/login/options").json()
+    bad = SoftAuthenticator()
+    assert stranger.post("/passkey/login/verify", json={"credential": bad.assert_(opts["challenge"])}).status_code == 401
+    pid = int(client.get("/admin/settings").text.split("/passkey/")[1].split("/")[0])
+    assert client.post(f"/passkey/{pid}/delete").status_code == 204

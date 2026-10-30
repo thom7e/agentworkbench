@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 import auth
 import github
+import passkeys
 import settings
 from db import db, now
 from render import slugify, templates
@@ -35,7 +36,7 @@ def settings_form(request: Request, msg: str = ""):
     return page(request, "admin_settings.html", tab="settings", msg=msg,
                 s={k: settings.get(k) for k in settings.DEFAULTS if k not in ("github_token", "proxmox_token_secret")},
                 areas="\n".join(settings.areas()), has_token=bool(settings.get("github_token")),
-                has_px_secret=bool(settings.get("proxmox_token_secret")))
+                has_px_secret=bool(settings.get("proxmox_token_secret")), passkeys=passkeys.stored())
 
 
 @router.post("/settings")

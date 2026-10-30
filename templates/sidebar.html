@@ -1,4 +1,5 @@
-{% set live_projects, other_count = side_data() %}{% set path = request.url.path %}
+{% set live_projects, other_count = side_data() %}{% set longest = (live_projects|map(attribute='name')|map('length')|list + [0])|max %}
+<style>:root{--side-w:{{ [264, [longest * 8 + 110, 440]|min]|max }}px}</style>{% set path = request.url.path %}
 <aside class="side" aria-label="{{ _('tab.nav') }}">
 <div class="brandrow"><i></i>{{ site_title() }}</div>
 <nav>

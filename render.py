@@ -76,6 +76,11 @@ templates.env.globals["t"] = t
 templates.env.globals["_"] = t
 templates.env.globals["lang"] = lambda: settings.get("language") if settings.get("language") in ("de", "en") else "de"
 templates.env.globals["site_title"] = lambda: settings.get("site_title")
+def asset_version():
+    files = (BASE / "static").glob("*")
+    return str(int(max((f.stat().st_mtime for f in files), default=0)))
+
+
 def quick_projects():
     with closing(db()) as con:
         return [(r["slug"], r["name"]) for r in con.execute(
@@ -84,6 +89,7 @@ def quick_projects():
 
 templates.env.globals["linked_notes"] = linked_notes
 templates.env.globals["quick_projects"] = quick_projects
+templates.env.globals["asset_v"] = asset_version()
 
 
 def slugify(name):

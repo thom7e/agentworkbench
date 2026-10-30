@@ -233,8 +233,9 @@ def test_live_toggle_shows_badge(client):
 def test_pwa_files_and_quick_add(client):
     sw = client.get("/sw.js")
     assert sw.status_code == 200 and sw.headers["service-worker-allowed"] == "/"
+    assert "__V__" not in sw.text and "awb-" in sw.text
     html = client.get("/").text
-    assert 'id="qa"' in html and "/static/app.js" in html and 'value="demo-app"' in html
+    assert 'id="qa"' in html and "/static/app.js?v=" in html and "/static/style.css?v=" in html and 'value="demo-app"' in html
     assert client.post("/p/demo-app/add", data={"text": "Per Schnell-Eintrag", "prio": "2", "kind": "todo"}).status_code == 303
     assert "Per Schnell-Eintrag" in client.get("/").text
     assert "agentworkbench://run?project=demo-app" in client.get("/").text

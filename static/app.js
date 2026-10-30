@@ -1,5 +1,39 @@
 (function () {
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(function () {});
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(function (reg) {
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) reg.update(); });
+    }).catch(function () {});
+    var reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!reloaded && navigator.serviceWorker.controller) { reloaded = true; location.reload(); }
+    });
+  }
+
+  // Pull to refresh (iOS home-screen apps have none of their own)
+  if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+    var ind = document.createElement('div');
+    ind.className = 'ptr';
+    ind.textContent = '↻';
+    document.body.appendChild(ind);
+    var py = null, pull = 0;
+    document.addEventListener('touchstart', function (e) {
+      py = window.scrollY <= 0 && e.touches.length === 1 && !e.target.closest('dialog,textarea,input,select') ? e.touches[0].clientY : null;
+      pull = 0;
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (py === null) return;
+      pull = e.touches[0].clientY - py;
+      if (pull > 0) {
+        ind.style.opacity = Math.min(pull / 80, 1);
+        ind.style.transform = 'translate(-50%,' + Math.min(pull, 120) / 2 + 'px) rotate(' + pull * 3 + 'deg)';
+      } else { py = null; ind.style.opacity = 0; }
+    }, { passive: true });
+    document.addEventListener('touchend', function () {
+      if (py !== null && pull > 90) { ind.classList.add('spin'); location.reload(); }
+      else { ind.style.opacity = 0; ind.style.transform = 'translate(-50%,0)'; }
+      py = null;
+    });
+  }
 
   var touchOS = /iPhone|iPad|iPod|Android/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);

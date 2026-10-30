@@ -250,3 +250,6 @@ button.act:hover{background:var(--hover)}
 .wrap{padding-top:env(safe-area-inset-top)}
 .top{padding-top:20px}
 @media (display-mode:standalone){.top{padding-top:32px}.hello{padding-top:32px}}
+body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top);background:var(--bg);z-index:30}
+.ptr{position:fixed;top:calc(env(safe-area-inset-top) + 8px);left:50%;transform:translate(-50%,0);opacity:0;font-size:26px;line-height:1;color:var(--accent);z-index:40;pointer-events:none}
+.ptr.spin{opacity:1!important;animation:ptrspin .8s linear infinite}@keyframes ptrspin{to{transform:translate(-50%,30px) rotate(360deg)}}

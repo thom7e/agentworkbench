@@ -1,5 +1,5 @@
-const V = 'awb-v1';
-const STATIC = ['/static/style.css', '/static/app.js', '/static/icon-192.png', '/static/apple-touch-icon.png', '/static/manifest.webmanifest'];
+const V = 'awb-__V__';
+const STATIC = ['/static/icon-192.png', '/static/apple-touch-icon.png', '/static/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(V + '-static').then((c) => c.addAll(STATIC)).then(() => self.skipWaiting()));

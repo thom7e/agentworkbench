@@ -1,0 +1,15 @@
+{% set live_projects, other_count = side_data() %}{% set path = request.url.path %}
+<aside class="side" aria-label="{{ _('tab.nav') }}">
+<div class="brandrow"><i></i>{{ site_title() }}</div>
+<nav>
+<a href="/"{% if path == '/' %} aria-current="page"{% endif %}>{{ _('tab.today') }}</a>
+<a href="/?tab=projects">{{ _('tab.projects') }}</a>
+<a href="/briefing"{% if path == '/briefing' %} aria-current="page"{% endif %}>{{ _('nav.briefing') }}</a>
+<a href="/admin/settings"{% if path.startswith('/admin') %} aria-current="page"{% endif %}>{{ _('admin') }}</a>
+</nav>
+<h4>{{ _('side.live') }}</h4>
+<div class="plist">
+{% for p in live_projects %}<a href="/p/{{ p.slug }}"{% if path == '/p/' ~ p.slug %} aria-current="page"{% endif %}><span><i class="lamp{{ ' u' if p.p1 }}"></i><b>{{ p.name }}</b></span><span class="cnt">{{ p.open_n or '' }}</span></a>{% endfor %}
+</div>
+<p class="more"><a href="/?tab=projects">{{ _('side.others', n=other_count) }}</a></p>
+</aside>

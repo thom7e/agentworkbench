@@ -464,6 +464,13 @@ def web_live(slug: str, live: str = Form(""), next: str = Form("")):
     return RedirectResponse(safe_next(next, f"/p/{slug}"), status_code=303)
 
 
+@app.get("/design/{name}")
+def set_design(name: str, next: str = "/"):
+    resp = RedirectResponse(safe_next(next, "/"), status_code=303)
+    resp.set_cookie("design", "fresh" if name == "fresh" else "classic", max_age=60 * 60 * 24 * 365, samesite="lax")
+    return resp
+
+
 @app.get("/briefing", response_class=HTMLResponse)
 def briefing_page(request: Request):
     with closing(db()) as con:

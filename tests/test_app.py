@@ -323,3 +323,12 @@ def test_passkey_register_and_login_roundtrip(client):
     assert stranger.post("/passkey/login/verify", json={"credential": bad.assert_(opts["challenge"])}).status_code == 401
     pid = int(client.get("/admin/settings").text.split("/passkey/")[1].split("/")[0])
     assert client.post(f"/passkey/{pid}/delete").status_code == 204
+
+
+def test_fresh_design_cookie_adds_sidebar(client):
+    assert 'class="side"' not in client.get("/").text
+    assert client.get("/design/fresh").status_code == 303
+    page = client.get("/").text
+    assert 'class="has-side"' in page and 'class="side"' in page and "/static/fresh.css?v=" in page
+    client.get("/design/classic")
+    assert 'class="side"' not in client.get("/").text

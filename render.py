@@ -76,6 +76,17 @@ templates.env.globals["t"] = t
 templates.env.globals["_"] = t
 templates.env.globals["lang"] = lambda: settings.get("language") if settings.get("language") in ("de", "en") else "de"
 templates.env.globals["site_title"] = lambda: settings.get("site_title")
+def side_data():
+    with closing(db()) as con:
+        live = con.execute(
+            "SELECT p.slug, p.name, "
+            "(SELECT COUNT(*) FROM todos t WHERE t.project=p.slug AND t.done=0 AND t.kind='todo') AS open_n, "
+            "(SELECT COUNT(*) FROM todos t WHERE t.project=p.slug AND t.done=0 AND t.kind='todo' AND t.prio=1) AS p1 "
+            "FROM projects p WHERE p.status='aktiv' AND p.live=1 ORDER BY p1 DESC, p.name COLLATE NOCASE").fetchall()
+        others = con.execute("SELECT COUNT(*) FROM projects WHERE status='aktiv' AND live=0").fetchone()[0]
+    return live, others
+
+
 def asset_version():
     files = (BASE / "static").glob("*")
     return str(int(max((f.stat().st_mtime for f in files), default=0)))
@@ -90,6 +101,7 @@ def quick_projects():
 templates.env.globals["linked_notes"] = linked_notes
 templates.env.globals["quick_projects"] = quick_projects
 templates.env.globals["asset_v"] = asset_version()
+templates.env.globals["side_data"] = side_data
 
 
 def slugify(name):

@@ -85,7 +85,7 @@ def test_inbox_item_can_be_marked_finished(client):
     client.post(f"/t/{tid}/finished", data={"next": "/"})
     html = client.get("/p/demo-app").text
     assert "Already done thing" in html
-    assert "Already done thing" not in client.get("/").text.split("Aufgaben nach")[0]
+    assert f"/t/{tid}/" not in client.get("/").text  # finished: no longer an open task or inbox entry
 
 
 def test_patch_project_and_multiple_notes(client):
@@ -325,10 +325,10 @@ def test_passkey_register_and_login_roundtrip(client):
     assert client.post(f"/passkey/{pid}/delete").status_code == 204
 
 
-def test_fresh_design_cookie_adds_sidebar(client):
-    assert 'class="side"' not in client.get("/").text
-    assert client.get("/design/fresh").status_code == 303
+def test_fresh_design_is_default_and_classic_is_a_cookie(client):
     page = client.get("/").text
     assert 'class="has-side"' in page and 'class="side"' in page and "/static/fresh.css?v=" in page
-    client.get("/design/classic")
+    assert client.get("/design/classic").status_code == 303
     assert 'class="side"' not in client.get("/").text
+    client.get("/design/fresh")
+    assert 'class="side"' in client.get("/").text

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/style.css?v={{ asset_v }}">
-{% set fresh = request is defined and request.cookies.get('design') == 'fresh' %}
+{% set fresh = request is defined and request.cookies.get('design') != 'classic' %}
 {% if fresh %}<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400..800&display=swap" rel="stylesheet"><link rel="stylesheet" href="/static/fresh.css?v={{ asset_v }}">{% endif %}
 </head><body{% if fresh %} class="has-side"{% endif %}>{% if fresh and request.url.path != '/login' and request.url.path != '/setup' %}{% include 'sidebar.html' %}{% endif %}<div class="wrap">
 {% block body %}{% endblock %}

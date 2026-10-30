@@ -12,6 +12,8 @@
 <label>{{ t('set.px.url') }}<input name="proxmox_url" value="{{ s.proxmox_url }}" autocomplete="off"><small>{{ t('set.px.url.help') }}</small></label>
 <label>{{ t('set.px.id') }}<input name="proxmox_token_id" value="{{ s.proxmox_token_id }}" autocomplete="off" placeholder="user@pve!name"></label>
 <label>{{ t('set.px.secret') }}<input type="password" name="proxmox_token_secret" placeholder="{{ '********' if has_px_secret }}" autocomplete="new-password"></label>
+<label>{{ t('set.owner') }}<input name="owner_name" value="{{ s.owner_name }}" autocomplete="off"><small>{{ t('set.owner.help') }}</small></label>
+<label>{{ t('set.push') }}<input name="push_contact" value="{{ s.push_contact }}" autocomplete="off"><small>{{ t('set.push.help') }}</small></label>
 <label class="check"><input type="checkbox" name="proxmox_verify_tls" value="1"{% if s.proxmox_verify_tls == '1' %} checked{% endif %}> {{ t('set.px.verify') }}</label>
 <div><button class="go">{{ t('save') }}</button></div>
 </form>

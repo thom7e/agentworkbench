@@ -16,6 +16,8 @@ DEFAULTS = {
     "proxmox_token_id": "",
     "proxmox_token_secret": "",
     "proxmox_verify_tls": "0",
+    "owner_name": "",
+    "push_contact": "mailto:admin@example.com",
 }
 
 

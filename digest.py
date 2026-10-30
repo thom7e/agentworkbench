@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 
 import github
 import push
+import settings
 from db import db
 
 DAYS = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")
@@ -48,7 +49,8 @@ def build_digest(con, today=None, prs=None):
     urgent = [k for k, v in projects.items() if v[0]["live"]]
     normal = [k for k in projects if k not in urgent]
     h = html.escape
-    out = [f"Guten Morgen, Thomas. Dein Briefing für {DAYS[today.weekday()]}, {today.strftime('%d.%m.')}"]
+    owner = settings.get("owner_name").strip()
+    out = [f"Guten Morgen{', ' + owner if owner else ''}. Dein Briefing für {DAYS[today.weekday()]}, {today.strftime('%d.%m.')}"]
     if urgent:
         out += ["", f"<b>Dringend</b> – live oder beim Kunden ({len(urgent)}):"]
         for k in sorted(urgent, key=lambda k: (-sum(r["prio"] == 1 for r in projects[k]), k.lower())):

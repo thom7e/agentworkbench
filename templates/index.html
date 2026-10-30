@@ -20,7 +20,7 @@
 <div class="sheet">
 {% for t in focus %}
 <div class="task urgent"><form method="post" action="/t/{{ t.id }}/toggle"><input type="hidden" name="next" value="/"><button class="box" title="{{ _('task.done.tip') }}" aria-label="{{ _('task.done') }}"></button></form>
-<div><a class="proj" href="/p/{{ t.project }}">{{ t.pname }}</a><span class="txt">{{ t.text|replace('**','') }}</span></div></div>
+<div><a class="proj" href="/p/{{ t.project }}">{{ t.pname }}</a><span class="txt">{{ (t.short or t.text|replace('**',''))|truncate(160) }} <a class="term" href="agentworkbench://run?project={{ t.project }}&amp;todo={{ t.id }}" title="{{ _('task.term') }}">&gt;_</a></span></div></div>
 {% else %}<p class="empty">{{ _('today.empty') }}</p>{% endfor %}
 </div></section>
 <section><h2>{{ _('recent.title') }}</h2>

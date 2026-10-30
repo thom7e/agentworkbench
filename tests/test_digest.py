@@ -3,6 +3,7 @@ from datetime import datetime
 
 import db
 import digest
+import settings
 
 TODAY = datetime(2026, 10, 29, 7, 0)
 
@@ -27,8 +28,9 @@ def test_digest_all_active_projects_p1_first(tmp_path, monkeypatch):
     db.init()
     with closing(db.db()) as con:
         seed(con)
+        settings.put("owner_name", "Thomas")
         text = digest.build_digest(con, TODAY, prs=[])
-    assert "Guten Morgen, Thomas" in text and "Donnerstag, 29.10." in text
+    assert "Guten Morgen, Thomas." in text and "Donnerstag, 29.10." in text
     assert "<b>Dringend</b>" in text and "<b>Beta</b><br>Dringendes erledigen; Zweites." in text
     assert text.index("Beta") < text.index("Alpha") and "<b>Sonst offen</b><br>Alpha (1)" in text
     assert "<b>Gamma</b>" in text and "Zeta" not in text and "Fertig" not in text
@@ -59,3 +61,11 @@ def test_stale_todos_are_called_out(tmp_path, monkeypatch):
         con.commit()
         text = digest.build_digest(con, TODAY, prs=[])
     assert "<b>Länger offen</b><br>2 Aufgaben seit über 30 Tagen offen: Alpha (2)" in text
+
+
+def test_greeting_without_owner_name_has_no_name(tmp_path, monkeypatch):
+    monkeypatch.setattr(db, "DB_PATH", str(tmp_path / "digest.db"))
+    db.init()
+    with closing(db.db()) as con:
+        text = digest.build_digest(con, TODAY, prs=[])
+    assert text.startswith("Guten Morgen. Dein Briefing")

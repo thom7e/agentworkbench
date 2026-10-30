@@ -6,7 +6,7 @@
 <div class="facts">
 <form class="inline" method="post" action="/p/{{ p.slug }}/status"><select name="status" aria-label="Status" onchange="this.form.submit()">{% for s in ('aktiv','pause','archiv') %}<option value="{{ s }}"{% if s == p.status %} selected{% endif %}>{{ _('status.' ~ s) }}</option>{% endfor %}</select></form><form class="inline" method="post" action="/p/{{ p.slug }}/live"><label title="{{ _('live.hint') }}"><input type="checkbox" name="live" value="1"{% if p.live %} checked{% endif %} onchange="this.form.submit()"> {{ _('badge.live') }}</label></form>{% if p.deploy %}<span>{{ p.deploy }}</span>{% endif %}{% if p.stack %}<span>{{ p.stack }}</span>{% endif %}
 {% if p.repo %}<a href="https://github.com/{{ p.repo }}">{{ p.repo }}</a>{% endif %}{% if p.wiki %}<a href="{{ p.wiki }}">Wiki</a>{% endif %}
-{% for label, url in linked_notes(p) %}<a href="{{ url }}">{{ label }}</a>{% endfor %}<a href="/admin/projects/{{ p.slug }}">{{ _('proj.edit') }}</a></div>
+{% for label, url in linked_notes(p) %}<a href="{{ url }}">{{ label }}</a>{% endfor %}<a href="/admin/projects/{{ p.slug }}">{{ _('proj.edit') }}</a><a class="term" href="agentworkbench://run?project={{ p.slug }}" title="{{ _('task.term.project') }}">&gt;_ {{ _('task.term.project.label') }}</a></div>
 {% if p.summary %}<p class="lead">{{ p.summary }}</p>{% endif %}</div>
 <nav class="ptabs" aria-label="{{ _('ptab.nav') }}">
 <button type="button" data-ptab-link="tasks">{{ _('ptab.tasks') }} <span>{{ todos|selectattr('done', 'equalto', 0)|list|length }}</span></button>
@@ -20,7 +20,7 @@
 <section data-ptab="tasks"><h2>{{ _('sec.open') if kind == 'todo' else _('sec.ideas') }}</h2><div class="sheet">
 {% for t in todos if t.kind == kind and not t.done %}
 <div class="task{{ ' urgent' if t.prio == 1 }}"><form method="post" action="/t/{{ t.id }}/toggle"><button class="box" aria-label="{{ _('task.done') }}"></button></form>
-<span class="txt">{% if t.prio == 1 %}<span class="prio">{{ _('tag.urgent') }}</span>{% endif %}{{ t.text|replace('**','') }}</span></div>
+<span class="txt">{% if t.prio == 1 %}<span class="prio">{{ _('tag.urgent') }}</span>{% endif %}{{ t.text|replace('**','') }} <a class="term" href="agentworkbench://run?project={{ t.project }}&amp;todo={{ t.id }}" title="{{ _('task.term') }}">&gt;_</a></span></div>
 {% else %}<p class="empty">{{ _('empty.open') if kind == 'todo' else _('empty.ideas') }}</p>{% endfor %}
 </div></section>{% endfor %}
 <form class="add taskadd" data-ptab="tasks" method="post" action="/p/{{ p.slug }}/add">

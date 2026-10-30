@@ -45,7 +45,7 @@ def settings_save(
     dormant_days: int = Form(90), default_sort: str = Form("aktuell"),
     github_owner: str = Form(""), github_token: str = Form(""), obsidian_vault: str = Form(""),
     proxmox_url: str = Form(""), proxmox_token_id: str = Form(""), proxmox_token_secret: str = Form(""),
-    proxmox_verify_tls: str = Form(""),
+    proxmox_verify_tls: str = Form(""), owner_name: str = Form(""), push_contact: str = Form("mailto:admin@example.com"),
 ):
     names = [a.strip() for a in areas.splitlines() if a.strip()]
     settings.put("site_title", site_title.strip() or "AgentWorkbench")
@@ -62,6 +62,8 @@ def settings_save(
     if proxmox_token_secret.strip():
         settings.put("proxmox_token_secret", proxmox_token_secret.strip())
     settings.put("proxmox_verify_tls", "1" if proxmox_verify_tls else "0")
+    settings.put("owner_name", owner_name.strip())
+    settings.put("push_contact", push_contact.strip() or "mailto:admin@example.com")
     return back("/admin/settings", "saved")
 
 

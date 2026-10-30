@@ -24,7 +24,6 @@ Almost everything is configured in the admin area. A few values come from the en
 | **GitHub token** | Read-only token, see [Getting started](getting-started.md#optional-github). Leave the field empty to keep the stored token |
 | **Your first name** | Optional. Used in the greeting of the morning briefing |
 | **Contact for push messages** | A `mailto:` or `https` address sent to push services as the sender contact; Apple requires a valid value for web push to arrive |
-| **Obsidian vault name** | Optional. A note link without a web address becomes an `obsidian://open?vault=NAME&file=PATH` link |
 | **Proxmox address, token ID, token secret, verify TLS** | Optional, see [Proxmox integration](proxmox.md) |
 
 Settings are stored in the `settings` table of the database. The GitHub token and the Proxmox secret are stored in plain text there, so protect the database file like any other secret.
@@ -40,7 +39,7 @@ Settings are stored in the `settings` table of the database. The GitHub token an
 | Summary | One or two sentences, shown below the title and in search |
 | GitHub repo | `owner/name`. Enables the Git section and the last-push time |
 | Wiki address | Link shown on the project page |
-| Notes | Links to external notes, one per line. A line can be a web address, an `obsidian://` address or, with a vault name set, a path inside your vault |
+| Notes | Links to external notes (specs, wiki pages), one web address per line |
 | Container or VM number | Links the project to a Proxmox guest, see [Proxmox integration](proxmox.md) |
 
 ## Data

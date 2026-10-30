@@ -37,11 +37,8 @@ def linked_notes(p):
         line = line.strip()
         if not line:
             continue
-        label = line.rstrip("/").rsplit("/", 1)[-1].removesuffix(".md")
-        if re.match(r"^(https?|obsidian):", line):
-            out.append((label if "/" in line else line, line))
-        elif settings.get("obsidian_vault"):
-            out.append((label, f"obsidian://open?vault={settings.get('obsidian_vault')}&file={quote(line)}"))
+        if re.match(r"^https?:", line):
+            out.append((line.rstrip("/").rsplit("/", 1)[-1].removesuffix(".md") or line, line))
     return out
 
 
@@ -52,7 +49,7 @@ MD_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6", "p", "ul", "ol", "li", "strong", 
 def md(text):
     html = _markdown.markdown(text or "", extensions=["tables", "fenced_code", "sane_lists", "nl2br"])
     html = html.replace("<li>[ ] ", "<li>\u2610 ").replace("<li>[x] ", "<li>\u2611 ").replace("<li>[X] ", "<li>\u2611 ")
-    clean = nh3.clean(html, tags=MD_TAGS, attributes={"a": {"href"}}, url_schemes={"http", "https", "mailto", "obsidian"})
+    clean = nh3.clean(html, tags=MD_TAGS, attributes={"a": {"href"}}, url_schemes={"http", "https", "mailto"})
     return Markup(clean)
 
 

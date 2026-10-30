@@ -9,7 +9,7 @@ AgentWorkbench is meant for a person or a small trusted team. This page says wha
 - **Sessions.** A signed cookie, `HttpOnly`, `SameSite=Lax`, valid for 30 days. Set `AGENTWORKBENCH_COOKIE_SECURE=1` behind HTTPS to mark it `Secure`.
 - **Login throttling.** After ten failed logins from one IP within ten minutes, further attempts are blocked. Every failed attempt is delayed by one second.
 - **Cross-site requests.** Form posts whose `Origin` header does not match the host are rejected. Together with `SameSite=Lax` cookies this covers the usual CSRF cases.
-- **Rendered Markdown is sanitized.** Notes and documents are converted to HTML and cleaned with an allow-list. Scripts, event handlers and unknown tags are removed, and only `http`, `https`, `mailto` and `obsidian` links are kept.
+- **Rendered Markdown is sanitized.** Notes and documents are converted to HTML and cleaned with an allow-list. Scripts, event handlers and unknown tags are removed, and only `http`, `https` and `mailto` links are kept.
 - **Read-only integrations.** The GitHub token should be read-only. The Proxmox token uses the `PVEAuditor` role. The dashboard only reads.
 - **First-run setup is one-shot.** `/setup` works only while no password exists.
 

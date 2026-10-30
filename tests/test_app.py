@@ -156,7 +156,7 @@ def test_proxmox_status_ip_and_hide_stopped(client, monkeypatch):
     proxmox._cache.clear()
     client.post("/admin/settings", data={
         "site_title": "T", "language": "de", "areas": "Allgemein", "dormant_days": 90, "default_sort": "aktuell",
-        "github_owner": "", "github_token": "", "obsidian_vault": "",
+        "github_owner": "", "github_token": "",
         "proxmox_url": "https://pve.example:8006", "proxmox_token_id": "u@pve!t", "proxmox_token_secret": "secret"})
     client.post("/admin/projects", data={"name": "Bibliothek", "area": "Allgemein", "vmid": 137})
     client.post("/admin/projects", data={"name": "Holtei App", "area": "Allgemein", "vmid": 201})
@@ -200,7 +200,7 @@ def test_markdown_import_and_json_export(client):
 def test_settings_roundtrip(client):
     client.post("/admin/settings", data={
         "site_title": "My Board", "language": "en", "areas": "Work\nHome", "dormant_days": 30,
-        "default_sort": "offen", "github_owner": "", "github_token": "", "obsidian_vault": "",
+        "default_sort": "offen", "github_owner": "", "github_token": "",
     })
     html = client.get("/").text
     assert "My Board" in html

@@ -43,7 +43,7 @@ def settings_form(request: Request, msg: str = ""):
 def settings_save(
     site_title: str = Form(...), language: str = Form("de"), areas: str = Form(""),
     dormant_days: int = Form(90), default_sort: str = Form("aktuell"),
-    github_owner: str = Form(""), github_token: str = Form(""), obsidian_vault: str = Form(""),
+    github_owner: str = Form(""), github_token: str = Form(""),
     proxmox_url: str = Form(""), proxmox_token_id: str = Form(""), proxmox_token_secret: str = Form(""),
     proxmox_verify_tls: str = Form(""), owner_name: str = Form(""), push_contact: str = Form("mailto:admin@example.com"),
 ):
@@ -56,7 +56,6 @@ def settings_save(
     settings.put("github_owner", github_owner.strip())
     if github_token.strip():
         settings.put("github_token", github_token.strip())
-    settings.put("obsidian_vault", obsidian_vault.strip())
     settings.put("proxmox_url", proxmox_url.strip())
     settings.put("proxmox_token_id", proxmox_token_id.strip())
     if proxmox_token_secret.strip():

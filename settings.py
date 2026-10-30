@@ -11,7 +11,6 @@ DEFAULTS = {
     "dormant_days": "90",
     "default_sort": "aktuell",
     "areas": json.dumps(["Allgemein"]),
-    "obsidian_vault": "",
     "proxmox_url": "",
     "proxmox_token_id": "",
     "proxmox_token_secret": "",

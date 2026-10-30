@@ -1,5 +1,7 @@
 # Development
 
+English · [Deutsch](de/development.md)
+
 ## Layout
 
 ```
@@ -11,16 +13,24 @@ settings.py       Settings stored in the database
 github.py         GitHub data with a short cache
 proxmox.py        Read-only Proxmox data with a short cache
 render.py         Jinja environment, Markdown rendering, formatting filters
+digest.py         Morning briefing: builds the text, sends the push (de, en)
+checks.py         Task checks: runs them, ticks off tasks, notifies
+push.py           Web push: VAPID key, subscriptions, sending
+passkeys.py       Passkey (WebAuthn) registration and sign-in
 i18n.py           Texts for the admin area, login and setup (de, en)
 i18n_ui.py        Texts for the home, project and search pages (de, en)
 templates/        Jinja templates
-static/           CSS, icons and the web app manifest
+static/           style.css (structure), op.css (theme), app.js (tabs, quick add, swipe, pull to refresh),
+                  passkey.js, sw.js (service worker), icons, web app manifest
+desktop/          Windows handler for the desktop terminal button
 scripts/          demo_seed.py (demo data), screenshots.py (README images)
 tests/            pytest suite
 examples/         Claude Code skill, systemd unit, proxy configs
 ```
 
-No build step, no JavaScript framework. The few scripts (drag and drop, filter, scroll position) are inline in the templates.
+No build step, no JavaScript framework. A few small scripts are inline in the templates (drag and drop, filter, scroll position); the rest is in `static/app.js` and `static/passkey.js`.
+
+Static files are served with a version number in the URL (the newest file time), and `/sw.js` is generated with the same number, so a new deployment reaches installed phone apps by itself.
 
 ## Run from source
 
@@ -38,7 +48,7 @@ Fill it with demo data first if you like: `AGENTWORKBENCH_DB=./dev.db python scr
 pytest
 ```
 
-The tests start the app against a temporary database and cover setup, login, the API, the inbox, notes, documents, search, the Proxmox integration (with a faked Proxmox), translations and the demo data. The CI workflow in `.github/workflows/ci.yml` runs them and also builds the Docker image, starts it and checks the health endpoint.
+The tests start the app against a temporary database and cover setup, login, passkeys (with a software authenticator), the API, the inbox, notes, documents, search, the briefing, checks, push, the Proxmox integration (with a faked Proxmox), translations and the demo data. The CI workflow in `.github/workflows/ci.yml` runs them and also builds the Docker image, starts it and checks the health endpoint.
 
 ## Database changes
 

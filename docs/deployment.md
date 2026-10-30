@@ -1,5 +1,7 @@
 # Deployment
 
+English · [Deutsch](de/deployment.md)
+
 AgentWorkbench is one process and one SQLite file. Pick whichever fits your setup.
 
 ## Docker Compose
@@ -57,19 +59,37 @@ Alternatives to opening a port: a VPN such as WireGuard or Tailscale, or a tunne
 
 Two small scripts run on a schedule (systemd timers or cron) next to the web app, with the same `AGENTWORKBENCH_DB`:
 
+| Script | When (example) | What it does |
+|---|---|---|
+| `checks.py` | daily 06:00 | Runs the [checks](briefing-and-checks.md#checks) of open tasks, ticks off the ones that pass, sends a notification. `--dry` only reports |
+| `digest.py` | daily 07:00 | Builds the [briefing](briefing-and-checks.md#the-morning-briefing) and sends it as a push notification. `--print` only prints it |
+
+A systemd unit and timer for the briefing (adapt the paths, repeat for `checks.py`):
+
 ```ini
-# dashboard-digest.service (timer: OnCalendar=*-*-* 07:00:00)
+# /etc/systemd/system/agentworkbench-digest.service
 [Service]
 Type=oneshot
-User=dashboard
-WorkingDirectory=/opt/dashboard
-Environment=AGENTWORKBENCH_DB=/var/lib/dashboard/dashboard.db
-ExecStart=/opt/dashboard/venv/bin/python digest.py
+User=awb
+WorkingDirectory=/opt/agentworkbench
+Environment=AGENTWORKBENCH_DB=/var/lib/agentworkbench/dashboard.db
+ExecStart=/opt/agentworkbench/venv/bin/python digest.py
+
+# /etc/systemd/system/agentworkbench-digest.timer
+[Timer]
+OnCalendar=*-*-* 07:00:00
+Persistent=true
+[Install]
+WantedBy=timers.target
 ```
 
-- `digest.py` builds the briefing and sends it as a web push (`python digest.py --print` only prints it). Open the app once, tap the bell on the briefing page and allow notifications; on iPhone this only works for the app added to the home screen, over HTTPS.
-- `checks.py` runs the machine checks of open tasks (`--dry` only reports). A check is a JSON object, for example `{"type": "http", "url": "https://example.com/robots.txt", "contains": "Sitemap:"}`, or `dns` (`host`, `ip`) or `port` (`host`, `port`); a list means all must pass.
-- Passkeys and push need HTTPS (a real domain or `localhost`). Put the app behind a reverse proxy as described above.
+Enable with `sudo systemctl enable --now agentworkbench-digest.timer`. `Persistent=true` runs a missed run after the server was off.
+
+Requirements:
+
+- **HTTPS** for push notifications and passkeys, and the app installed on the phone, see [Phone and desktop](phone-and-desktop.md).
+- Set **Contact for push messages** and **Your first name** in the settings.
+- `pip install -r requirements.txt` after an update brings the push and passkey libraries; the push key is created on first use.
 
 ## Backups
 

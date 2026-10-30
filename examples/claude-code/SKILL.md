@@ -27,9 +27,10 @@ Start every command with:
    - Add a task (it lands in the user's inbox):
      ```bash
      curl -s -X POST -H "$H" -H "Content-Type: application/json; charset=utf-8" \
-       --data-binary '{"text":"...","prio":2}' "$AWB_URL/api/projects/<slug>/todos"
+       --data-binary '{"text":"...","short":"...","prio":2}' "$AWB_URL/api/projects/<slug>/todos"
      ```
-     Use `prio` 1 only for deadlines or risks. Ideas: add `"kind":"idee"`.
+     `short` is a one-line title in plain language without paths, commands or jargon, the way you would tell a non-technical person. The morning briefing shows it; `text` may hold the details. Use `prio` 1 only for deadlines or risks. Ideas: add `"kind":"idee"`.
+     **Machine check (optional `check`):** if completion can be proven by a network probe (page returns 200, text on the page, redirect, DNS, open port), pass `check` as a JSON string, for example `"check":"{\"type\":\"http\",\"url\":\"https://example.com/robots.txt\",\"contains\":\"Sitemap:\"}"`. Types: `http` (`url`, `status`, `contains`, `not_contains`, `location_contains`), `dns` (`host`, `ip`), `port` (`host`, `port`); a list means all must pass. A daily run ticks the task off with a log entry. Only set a check that proves the whole task. Add one later with `PATCH /api/todos/<id>` and `{"check":"..."}`.
    - Save lasting knowledge as a **note** (a decision and its reason, a pitfall, how to reach something). Pin only what matters:
      ```bash
      curl -s -X POST -H "$H" -H "Content-Type: application/json; charset=utf-8" \
@@ -38,7 +39,7 @@ Start every command with:
    - Search notes, documents, tasks and projects: `curl -s -H "$H" "$AWB_URL/api/search?q=<term>"`
    - Documents (longer Markdown pages): the briefing lists them. Read with `GET /api/docs/<id>`, change with `PUT /api/docs/<id>` and `{"title":"...","body":"..."}`, create with `POST /api/projects/<slug>/docs`. Read before changing and change only what is needed.
    - Move a task to another project or change its priority: `PATCH /api/todos/<id>` with `{"project":"<slug>","prio":2}`
-   - Change project fields without touching the rest: `PATCH /api/projects/<slug>`
+   - Change project fields without touching the rest: `PATCH /api/projects/<slug>`. `live` (`1` or `0`) marks a project as live or at the customer; those projects get their own section in the morning briefing, all others appear in one line.
 3. **End, closing check (never skip):**
    1. Fetch the briefing again and go through all open tasks of the project, including those of other agents.
    2. Tick off every task that was finished in this session or whose completion is proven on the system.

@@ -69,3 +69,15 @@ def test_greeting_without_owner_name_has_no_name(tmp_path, monkeypatch):
     with closing(db.db()) as con:
         text = digest.build_digest(con, TODAY, prs=[])
     assert text.startswith("Guten Morgen. Dein Briefing")
+
+
+def test_briefing_follows_the_interface_language(tmp_path, monkeypatch):
+    monkeypatch.setattr(db, "DB_PATH", str(tmp_path / "digest.db"))
+    db.init()
+    with closing(db.db()) as con:
+        seed(con)
+        settings.put("language", "en")
+        settings.put("owner_name", "Alex")
+        text = digest.build_digest(con, TODAY, prs=[])
+    assert text.startswith("Good morning, Alex. Your briefing for Thursday, 10/29")
+    assert "<b>Urgent</b>" in text and "<b>Everything else open</b>" in text

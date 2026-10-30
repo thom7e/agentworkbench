@@ -2,6 +2,7 @@
 
 Usage: python digest.py [--print]   (--print only prints, nothing is sent)
 The notification opens /briefing, which renders the same text and lets you choose which projects are shown in detail.
+The text follows the interface language from the settings (de or en).
 """
 import html
 import re
@@ -14,10 +15,42 @@ import push
 import settings
 from db import db
 
-DAYS = ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")
 HIDDEN = ("archiv", "archived", "pause")
 MAX_NORMAL = 20
 STALE_DAYS = 30
+
+TEXT = {
+    "de": {
+        "days": ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"),
+        "date": "%d.%m.",
+        "hello": "Guten Morgen{name}. Dein Briefing für {day}, {date}",
+        "urgent": "<b>Dringend</b> – live oder beim Kunden ({n}):",
+        "more": "weitere",
+        "rest": "<b>Sonst offen</b>",
+        "and_more": " und {n} weitere",
+        "stale": "<b>Länger offen</b><br>{n} Aufgaben seit über {days} Tagen offen: {names}",
+        "none": "Nichts Dringendes in den aktiven Projekten.",
+        "prs": "<b>Pull Requests</b>",
+        "push": "Morgen-Briefing",
+    },
+    "en": {
+        "days": ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),
+        "date": "%m/%d",
+        "hello": "Good morning{name}. Your briefing for {day}, {date}",
+        "urgent": "<b>Urgent</b> – live or at the customer ({n}):",
+        "more": "more",
+        "rest": "<b>Everything else open</b>",
+        "and_more": " and {n} more",
+        "stale": "<b>Open for a long time</b><br>{n} tasks open for over {days} days: {names}",
+        "none": "Nothing urgent in the active projects.",
+        "prs": "<b>Pull requests</b>",
+        "push": "Morning briefing",
+    },
+}
+
+
+def tx():
+    return TEXT.get(settings.get("language")) or TEXT["de"]
 
 
 def plain(text, n=90):
@@ -30,7 +63,8 @@ def plain(text, n=90):
     return text if len(text) <= n else text[: n - 1].rsplit(" ", 1)[0] + "…"
 
 
-def phrase(rows, limit, tail="weitere"):
+def phrase(rows, limit, tail=None):
+    tail = tail or tx()["more"]
     items = [r["short"] or plain(r["text"]) for r in rows]
     text = "; ".join(items[:limit])
     return text + (f" (+{len(items) - limit} {tail})" if len(items) > limit else "")
@@ -39,6 +73,7 @@ def phrase(rows, limit, tail="weitere"):
 def build_digest(con, today=None, prs=None):
     today = today or datetime.now()
     prs = github.open_prs() if prs is None else prs
+    T = tx()
     marks = ",".join("?" * len(HIDDEN))
     rows = con.execute(
         f"SELECT p.name, p.live, t.prio, t.text, t.short, t.created FROM todos t JOIN projects p ON p.slug=t.project "
@@ -50,15 +85,15 @@ def build_digest(con, today=None, prs=None):
     normal = [k for k in projects if k not in urgent]
     h = html.escape
     owner = settings.get("owner_name").strip()
-    out = [f"Guten Morgen{', ' + owner if owner else ''}. Dein Briefing für {DAYS[today.weekday()]}, {today.strftime('%d.%m.')}"]
+    out = [T["hello"].format(name=", " + owner if owner else "", day=T["days"][today.weekday()], date=today.strftime(T["date"]))]
     if urgent:
-        out += ["", f"<b>Dringend</b> – live oder beim Kunden ({len(urgent)}):"]
+        out += ["", T["urgent"].format(n=len(urgent))]
         for k in sorted(urgent, key=lambda k: (-sum(r["prio"] == 1 for r in projects[k]), k.lower())):
             out += ["", f"<b>{h(k)}</b><br>{h(phrase(projects[k], 3))}."]
     if normal:
         top = sorted(normal, key=lambda k: (-len(projects[k]), k.lower()))
         names = ", ".join(f"{k} ({len(projects[k])})" for k in top[:MAX_NORMAL])
-        out += ["", f"<b>Sonst offen</b><br>{h(names)}" + (f" und {len(top) - MAX_NORMAL} weitere" if len(top) > MAX_NORMAL else "")]
+        out += ["", f"{T['rest']}<br>{h(names)}" + (T["and_more"].format(n=len(top) - MAX_NORMAL) if len(top) > MAX_NORMAL else "")]
     cutoff = (today - timedelta(days=STALE_DAYS)).strftime("%Y-%m-%d")
     stale = {}
     for r in rows:
@@ -66,11 +101,11 @@ def build_digest(con, today=None, prs=None):
             stale[r["name"]] = stale.get(r["name"], 0) + 1
     if stale:
         names = ", ".join(f"{k} ({n})" for k, n in sorted(stale.items(), key=lambda kv: (-kv[1], kv[0].lower()))[:5])
-        out += ["", f"<b>Länger offen</b><br>{sum(stale.values())} Aufgaben seit über {STALE_DAYS} Tagen offen: {h(names)}"]
+        out += ["", T["stale"].format(n=sum(stale.values()), days=STALE_DAYS, names=h(names))]
     if not projects:
-        out += ["", "Nichts Dringendes in den aktiven Projekten."]
+        out += ["", T["none"]]
     if prs:
-        out += ["", f"<b>Pull Requests</b>: {h(', '.join(sorted({pr['repo'].split('/')[-1] for pr in prs})))}"]
+        out += ["", f"{T['prs']}: {h(', '.join(sorted({pr['repo'].split('/')[-1] for pr in prs})))}"]
     return "\n".join(out)
 
 
@@ -95,7 +130,7 @@ def briefing_projects(con):
 
 def push_briefing(text):
     lines = [re.sub(r"<[^>]+>", "", line) for line in text.replace("<br>", " – ").splitlines() if line.strip()]
-    return push.send("Morgen-Briefing", " ".join(lines[1:3]), "/briefing")
+    return push.send(tx()["push"], " ".join(lines[1:3]), "/briefing")
 
 
 if __name__ == "__main__":

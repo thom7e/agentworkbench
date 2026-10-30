@@ -1,10 +1,12 @@
 # Proxmox integration
 
+English · [Deutsch](de/proxmox.md)
+
 Optional and read-only. When enabled, the dashboard shows which projects run on which container or VM, whether they are up, and their IP address. It never starts, stops or changes anything.
 
 ## What you get
 
-- A **green or grey dot** next to every linked project on the home page.
+- A small **LXC or VM tag** next to every linked project in the project list (amber when it runs, grey when it is stopped; the hover text names guest and node).
 - On the project page a **Runs on** card: type and number, name, node, IP, CPU, memory and uptime.
 - A **Containers and VMs** section at the bottom of the home page listing every guest of the cluster. Guests without a project have a **Create project** link that pre-fills name and number.
 - A **Hide stopped** switch that hides stopped guests and the projects linked to them.

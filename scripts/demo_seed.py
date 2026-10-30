@@ -132,6 +132,7 @@ def main():
         for i, (slug, name, area, status, deploy, stack, summary) in enumerate(PROJECTS):
             con.execute("INSERT INTO projects(slug,name,area,status,deploy,stack,summary,sort) VALUES(?,?,?,?,?,?,?,?)",
                         (slug, name, area, status, deploy, stack, summary, i))
+        con.execute("UPDATE projects SET live=1 WHERE slug IN ('bakery-site', 'dental-booking', 'choir-tickets')")
         for slug, text, prio, kind, done in TODOS:
             con.execute("INSERT INTO todos(project,text,kind,prio,done,created,done_at) VALUES(?,?,?,?,?,?,?)",
                         (slug, text, kind, prio, 0 if done is None else 1, ts(20), None if done is None else ts(done)))
@@ -149,6 +150,7 @@ def main():
         con.commit()
     settings.put("site_title", "AgentWorkbench")
     settings.put("language", "en")
+    settings.put("owner_name", "Alex")
     settings.put("areas", json.dumps(AREAS))
     settings.put("admin_hash", auth.hash_password(PASSWORD))
     print(f"Demo data created in {db.DB_PATH}\nSign in with the password: {PASSWORD}")

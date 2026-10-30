@@ -1,5 +1,7 @@
 # API reference
 
+English · [Deutsch](de/api.md)
+
 Base URL: the address of your instance, for example `https://workbench.example.com`.
 
 ## Authentication
@@ -10,9 +12,9 @@ Send a token in the `Authorization` header:
 Authorization: Bearer wb_...
 ```
 
-Create tokens under **Admin → API access**. A signed-in browser session also works, which is how the in-page forms use `/export/*`. Without a valid token the API answers `401`.
+Create tokens under **Admin → API access**. A signed-in browser session also works for the pages. Without a valid token the API answers `401`.
 
-Request bodies are JSON (`Content-Type: application/json`, UTF-8). Unknown fields are ignored. Unknown projects, tasks or documents answer `404`.
+Request bodies are JSON (`Content-Type: application/json`, UTF-8). Unknown fields are ignored. Unknown projects, tasks, notes or documents answer `404`.
 
 ## Values
 
@@ -21,6 +23,7 @@ Request bodies are JSON (`Content-Type: application/json`, UTF-8). Unknown field
 | `status` | `aktiv` (active), `pause` (paused), `archiv` (archived) |
 | `kind` | `todo` (task), `idee` (idea) |
 | `prio` | `1` urgent, `2` normal, `3` someday |
+| `live` | `1` live or at the customer, `0` not |
 
 ## Overview and briefing
 
@@ -57,7 +60,7 @@ Task ids in the briefing are the ids used by the endpoints below.
 
 ### `PUT /api/projects`
 
-Create or fully replace a project. Fields not sent are reset to their defaults.
+Create or fully replace a project. Fields not sent are reset to their defaults, except `live`, which this call never changes (use `PATCH`).
 
 ```json
 {"slug": "website", "name": "Website relaunch", "status": "aktiv", "area": "Customer sites",
@@ -65,15 +68,17 @@ Create or fully replace a project. Fields not sent are reset to their defaults.
  "vault_note": "https://example.com/spec", "repo": "me/website", "wiki": "", "vmid": 0}
 ```
 
-`slug` and `name` are required. `area` should be one of the groups from the settings. `vault_note` takes one link per line.
+`slug` and `name` are required. `area` should be one of the groups from the settings. `vault_note` (a historical name) takes one web address per line, shown as links on the project page.
 
 ### `PATCH /api/projects/{slug}`
 
-Change only the fields you send. Accepts `name`, `status`, `area`, `deploy`, `stack`, `summary`, `vault_note`, `repo`, `wiki`, `vmid`.
+Change only the fields you send. Accepts `name`, `status`, `area`, `deploy`, `stack`, `summary`, `vault_note`, `repo`, `wiki`, `vmid` and `live`.
 
 ```bash
 curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
      -d '{"status": "pause"}' $URL/api/projects/website
+curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+     -d '{"live": 1}' $URL/api/projects/website
 ```
 
 ## Tasks
@@ -81,14 +86,22 @@ curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/js
 ### `POST /api/projects/{slug}/todos`
 
 ```json
-{"text": "Add rate limiting", "short": "Limit requests per minute", "prio": 1, "kind": "todo", "check": ""}
+{"text": "Add rate limiting to the login", "short": "Limit login attempts", "prio": 1, "kind": "todo", "check": ""}
 ```
 
-`prio` defaults to `2`, `kind` to `todo`. `short` is a one-line, plain-language title used in the morning briefing. `check` is an optional JSON string describing a machine check (see [Checks](deployment.md#morning-briefing-and-checks)); when it passes the task is ticked off automatically. Returns `{"id": 42}`. Tasks created through the API are marked as coming from an agent and appear in the **inbox** until a person accepts, finishes or discards them.
+| Field | Meaning |
+|---|---|
+| `text` | The full description, details allowed. Required |
+| `short` | One-line, plain-language title used in the briefing. Without it the text is shortened automatically |
+| `prio` | Defaults to `2` |
+| `kind` | Defaults to `todo` |
+| `check` | Optional machine check as a JSON **string**, see [Briefing and checks](briefing-and-checks.md#checks). When it passes, the task is ticked off automatically |
+
+Returns `{"id": 42}`. Tasks created through the API are marked as coming from an agent and appear in the **inbox** until a person accepts, finishes or discards them.
 
 ### `PATCH /api/todos/{id}`
 
-Change `project` (move to another project), `text`, `prio` or `kind`.
+Change `project` (move to another project), `text`, `short`, `check`, `prio` or `kind`.
 
 ```json
 {"project": "other-project", "prio": 1}
@@ -115,6 +128,10 @@ Mark a task as done and write an activity entry.
 ```
 
 Returns `{"id": 7}`. The note is marked as written by an agent. Pinned notes are always part of the briefing.
+
+### `PUT /api/notes/{id}`
+
+Replace text and pin state of a note: `{"text": "...", "pinned": false}`. Useful to keep a synchronised copy of an external source up to date instead of creating duplicates.
 
 ## Documents
 
@@ -150,3 +167,15 @@ Plain text, one hit per line: `note #7 [slug] date: text`, `doc #3 [slug] title`
 ## Health check
 
 `GET /healthz` returns `ok` and needs no authentication.
+
+## Browser-only endpoints
+
+These are used by the web interface and need a signed-in browser session, not a token. They are listed for completeness.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /briefing` | The briefing page |
+| `GET /push/key`, `POST /push/subscribe`, `POST /push/test` | Register a device for push notifications and send a test |
+| `GET /passkey/register/options`, `POST /passkey/register/verify`, `POST /passkey/{id}/delete` | Add and remove passkeys |
+| `GET /passkey/login/options`, `POST /passkey/login/verify` | Passkey sign-in (public) |
+| `GET /sw.js` | The service worker (public) |

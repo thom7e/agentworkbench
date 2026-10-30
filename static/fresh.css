@@ -106,12 +106,15 @@ body::before{background:var(--surface)}
 
 .row .count,.row .age{font-variant-numeric:normal}
 
-/* Today: the urgent list comes first, the inbox is compact, the board is folded away */
+/* Today: the urgent list comes first, the inbox stays stacked and compact, the board is folded away */
 .inbox .board-head{align-items:center}
-.inbox .sheet .task .grow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 16px;align-items:center;width:100%}
-.inbox .sheet .task .grow .proj{grid-column:1/-1}
-.inbox .sheet .task .actions{display:flex;gap:8px;flex-wrap:wrap;margin:0}
+.inbox .sheet .task .actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 2px}
 .inbox .sheet .task .actions .act{padding:5px 12px;font-size:14px}
-@media (max-width:700px){.inbox .sheet .task .grow{grid-template-columns:1fr}}
 .board-wrap .fold>summary{min-height:44px}
 .board-wrap .board-head{margin:6px 0 10px}
+
+/* project rows: straight dividers, name and lamp on one line */
+.row{border-radius:0}
+.row .name{display:flex;align-items:center;gap:8px;min-width:0}
+.row .name .live{margin-left:0;flex:none}
+@media (min-width:761px){.row{grid-template-columns:minmax(280px,1.3fr) minmax(0,2.2fr) 130px 110px}}

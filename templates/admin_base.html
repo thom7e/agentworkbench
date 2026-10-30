@@ -6,4 +6,5 @@
 <div class="hello"><h1>{{ t('admin') }}</h1></div>
 {% if msg %}<p class="notice">{{ t(msg) }}</p>{% endif %}
 {% block admin %}{% endblock %}
+{% with tab_active='more' %}{% include 'tabbar.html' %}{% endwith %}
 {% endblock %}

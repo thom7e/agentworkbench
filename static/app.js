@@ -9,6 +9,43 @@
     });
   }
 
+  var mobile = window.matchMedia('(max-width:700px)').matches;
+
+  // Collapsible sections on the project page (open on desktop, closed on the phone)
+  document.querySelectorAll('details[data-closed-mobile]').forEach(function (d) { d.open = !mobile; });
+
+  // Today / Projects tabs on the start page (the bottom bar switches the view without reloading)
+  var tabLinks = document.querySelectorAll('.tabbar [data-tab-link]');
+  if (document.querySelector('[data-tab]') && tabLinks.length) {
+    var setTab = function (name) {
+      document.body.dataset.tab = name;
+      try { sessionStorage.setItem('awb-tab', name); } catch (e) {}
+      tabLinks.forEach(function (a) {
+        if (a.dataset.tabLink === name) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      });
+    };
+    var wanted = new URLSearchParams(location.search).get('tab') || (function () { try { return sessionStorage.getItem('awb-tab'); } catch (e) { return null; } })() || 'today';
+    setTab(wanted === 'projects' ? 'projects' : 'today');
+    tabLinks.forEach(function (a) {
+      a.addEventListener('click', function (e) { e.preventDefault(); setTab(a.dataset.tabLink); window.scrollTo(0, 0); });
+    });
+  }
+
+  // Inbox: only the first two entries on the phone
+  var inbox = document.querySelector('.inbox[data-more]');
+  if (inbox && mobile) {
+    inbox.querySelectorAll('.sheet').forEach(function (sheet) {
+      var tasks = sheet.querySelectorAll('.task');
+      if (tasks.length <= 2) return;
+      tasks.forEach(function (t, i) { if (i >= 2) t.hidden = true; });
+      var more = document.createElement('button');
+      more.type = 'button'; more.className = 'linklike';
+      more.textContent = inbox.dataset.more.replace('{n}', tasks.length);
+      more.addEventListener('click', function () { tasks.forEach(function (t) { t.hidden = false; }); more.remove(); });
+      sheet.appendChild(more);
+    });
+  }
+
   // Pull to refresh (iOS home-screen apps have none of their own)
   if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
     var ind = document.createElement('div');

@@ -231,6 +231,7 @@ def index(request: Request, status: str = "aktiv", sort: str = "", hide_stopped:
             "SELECT t.*, p.name AS pname FROM todos t JOIN projects p ON p.slug=t.project "
             "WHERE t.seen=0 AND t.done=0 ORDER BY t.id DESC"
         ).fetchall()
+        brief = digest.summary_counts(con)
         board = {1: [], 2: [], 3: []}
         for t in con.execute(
             "SELECT t.*, p.name AS pname FROM todos t JOIN projects p ON p.slug=t.project "
@@ -247,7 +248,7 @@ def index(request: Request, status: str = "aktiv", sort: str = "", hide_stopped:
     guest_rows = [g for g in px.values() if not (hide and g["status"] != "running")]
     return templates.TemplateResponse(
         request, "index.html",
-        {"inbox": inbox, "prs": github.open_prs(), "dormant_days": dormant_days,
+        {"brief": brief, "inbox": inbox, "prs": github.open_prs(), "dormant_days": dormant_days,
          "px_enabled": bool(px) or proxmox.enabled(), "hide_stopped": hide, "guests": guest_rows, "linked": linked,
          "sort": sort, "groups": groups, "focus": focus, "recent": recent, "status": status, "board": board,
          "board_projects": sorted({t["pname"] for col in board.values() for t in col}),

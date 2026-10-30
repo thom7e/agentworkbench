@@ -17,7 +17,7 @@
 <span class="txt">{% if t.prio == 1 %}<span class="prio">{{ _('tag.urgent') }}</span>{% endif %}{{ t.text|replace('**','') }}</span></div>
 {% else %}<p class="empty">{{ _('empty.open') if kind == 'todo' else _('empty.ideas') }}</p>{% endfor %}
 </div></section>{% endfor %}
-<form class="add" method="post" action="/p/{{ p.slug }}/add">
+<form class="add taskadd" method="post" action="/p/{{ p.slug }}/add">
 <input name="text" placeholder="{{ _('add.ph') }}" required aria-label="{{ _('add.ph') }}">
 <select name="kind" aria-label="{{ _('add.kind') }}"><option value="todo">{{ _('kind.todo') }}</option><option value="idee">{{ _('kind.idee') }}</option></select>
 <select name="prio" aria-label="{{ _('add.prio') }}"><option value="1">{{ _('popt.1') }}</option><option value="2" selected>{{ _('popt.2') }}</option><option value="3">{{ _('popt.3') }}</option></select>
@@ -32,11 +32,11 @@
 <form class="inline" method="post" action="/n/{{ n.id }}/delete"><button class="linklike del" title="{{ _('notes.del.tip') }}">{{ _('notes.del') }}</button></form></span></header>
 <div class="md">{{ n.text|md }}</div></article>{% else %}<p class="empty">{{ _('notes.empty') }}</p>{% endfor %}
 </section>
-<section><h2>{{ _('done.title') }}</h2><div class="sheet">
+<section><details class="fold" data-closed-mobile><summary><h2>{{ _('done.title') }}</h2></summary><div class="sheet">
 {% for t in todos if t.done %}<div class="task t-done"><form method="post" action="/t/{{ t.id }}/toggle"><button class="box checked" aria-label="{{ _('done.reopen') }}"></button></form>
 <div><span class="txt">{{ t.text|replace('**','') }}</span><time>{{ t.done_at|fmtdate }}</time></div></div>
 {% else %}<p class="empty">{{ _('done.empty') }}</p>{% endfor %}
-</div></section></div>
+</div></details></section></div>
 
 <div>
 {% if guest %}<section><h2>{{ _('host.title') }}</h2><div class="sheet hostcard">
@@ -49,10 +49,10 @@
 <p class="branches">{{ _('git.branches') }}: {% for b in gh.branches %}<span class="br{{ ' main' if b == gh.default_branch }}">{{ b }}</span>{% endfor %}</p>
 <ul class="commits">{% for c in gh.commits %}<li><a href="{{ c.url }}"><code>{{ c.sha }}</code> {{ c.msg|truncate(90) }}</a><time>{{ c.date }}</time></li>{% endfor %}</ul>
 </section>{% endif %}
-<section><h2>{{ _('log.title') }}</h2>
+<section><details class="fold" data-closed-mobile><summary><h2>{{ _('log.title') }}</h2></summary>
 <ul class="log">{% for a in log %}<li><time>{{ a.ts|fmtdate }}</time>{{ a.text }}</li>{% else %}<li class="empty">{{ _('log.empty') }}</li>{% endfor %}</ul>
 <form class="add" method="post" action="/p/{{ p.slug }}/log"><input name="text" placeholder="{{ _('log.ph') }}" required aria-label="{{ _('log.aria') }}"><button class="go">{{ _('log.btn') }}</button></form>
-</section></div></div>
+</details></section></div></div>
 <section class="docs" id="docs"><h2>{{ _('docs.title') }} <small class="hint">{{ _('docs.hint') }}</small></h2>
 {% for d in docs %}<details class="doc" id="doc-{{ d.id }}"{% if loop.length == 1 %} open{% endif %}>
 <summary><span class="dt">{{ d.title }}</span><span class="dm">{{ d.updated|fmtdate }}</span></summary>
@@ -69,4 +69,5 @@
 <label>{{ _('docs.label.text') }}<textarea name="body" rows="10"></textarea></label><div class="actions"><button class="act keep">{{ _('docs.create') }}</button></div></form></details>
 </section>
 {% include 'quickadd.html' %}
+{% with tab_active='projects' %}{% include 'tabbar.html' %}{% endwith %}
 {% endblock %}

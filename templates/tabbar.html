@@ -1,0 +1,6 @@
+<nav class="tabbar" aria-label="{{ _('tab.nav') }}">
+<a href="/" data-tab-link="today"{% if tab_active == 'today' %} aria-current="page"{% endif %}>{{ _('tab.today') }}</a>
+<a href="/?tab=projects" data-tab-link="projects"{% if tab_active == 'projects' %} aria-current="page"{% endif %}>{{ _('tab.projects') }}</a>
+<a href="/briefing"{% if tab_active == 'briefing' %} aria-current="page"{% endif %}>{{ _('nav.briefing') }}</a>
+<a href="/admin/settings"{% if tab_active == 'more' %} aria-current="page"{% endif %}>{{ _('tab.more') }}</a>
+</nav>

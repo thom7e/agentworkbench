@@ -72,6 +72,16 @@ def build_digest(con, today=None, prs=None):
     return "\n".join(out)
 
 
+def summary_counts(con):
+    """(projects that are live and have open P1/P2 todos, other projects with open P1/P2 todos)."""
+    marks = ",".join("?" * len(HIDDEN))
+    rows = con.execute(
+        f"SELECT p.slug, p.live FROM todos t JOIN projects p ON p.slug=t.project "
+        f"WHERE t.done=0 AND t.kind='todo' AND t.prio<=2 AND p.status NOT IN ({marks}) GROUP BY p.slug", HIDDEN).fetchall()
+    urgent = sum(1 for r in rows if r["live"])
+    return urgent, len(rows) - urgent
+
+
 def briefing_projects(con):
     """Projects offered in the briefing settings: live ones plus everything with open todos."""
     marks = ",".join("?" * len(HIDDEN))

@@ -12,9 +12,10 @@
 <div class="hello"><h1>{{ today }}</h1>
 <form class="searchbox" method="get" action="/search"><input type="search" name="q" placeholder="{{ _('idx.search.ph') }}" aria-label="{{ _('search.title') }}"></form>
 <p>{{ _('idx.summary', n=focus|length, m=open_total, status=_('status.' ~ status)) }}</p></div>
+<a class="brief-card" data-tab="today" href="/briefing"><span>{{ _('brief.card', n=brief[0], m=brief[1]) }}</span><b>{{ _('brief.read') }} &rarr;</b></a>
 
 {% if inbox or prs %}
-<section class="inbox"><div class="board-head"><div><h2>{{ _('inbox.title') }}</h2><p class="hint2">{{ _('inbox.hint', n=inbox|length, m=prs|length) }}</p></div>
+<section class="inbox" data-tab="today" data-more="{{ _('inbox.more') }}"><div class="board-head"><div><h2>{{ _('inbox.title') }}</h2><p class="hint2">{{ _('inbox.hint', n=inbox|length, m=prs|length) }}</p></div>
 {% if inbox %}<form method="post" action="/inbox/seen-all"><input type="hidden" name="next" value="/"><button class="go ghost" title="{{ _('inbox.all.tip') }}">{{ _('inbox.all') }}</button></form>{% endif %}</div>
 <div class="inbox-grid">
 {% if inbox %}<div class="sheet"><h3>{{ _('inbox.new') }}</h3>
@@ -29,7 +30,7 @@
 </div></section>
 {% endif %}
 
-<section class="board-wrap"><div class="board-head"><h2>{{ _('board.title') }} <small class="hint">{{ _('board.hint') }}</small></h2>
+<section class="board-wrap" data-tab="today"><div class="board-head"><h2>{{ _('board.title') }} <small class="hint">{{ _('board.hint') }}</small></h2>
 <select id="pfilter" aria-label="{{ _('board.filter') }}"><option value="">{{ _('board.all') }}</option>
 {% for name in board_projects %}<option>{{ name }}</option>{% endfor %}</select></div>
 <div class="board">
@@ -47,7 +48,7 @@
 </div></section>
 
 {% if status == 'aktiv' %}
-<div class="today">
+<div class="today" data-tab="today">
 <section><h2>{{ _('today.title') }}</h2>
 <div class="sheet">
 {% for t in focus %}
@@ -61,12 +62,12 @@
 </div>
 {% endif %}
 
-<div class="sortbar">{{ _('sort.label') }}
+<div class="sortbar" data-tab="projects">{{ _('sort.label') }}
 <a data-keep href="/?status={{ status }}&sort=aktuell{{ '&hide_stopped=1' if hide_stopped }}"{% if sort != 'offen' %} aria-current="true"{% endif %}>{{ _('sort.recent') }}</a>
 <a data-keep href="/?status={{ status }}&sort=offen{{ '&hide_stopped=1' if hide_stopped }}"{% if sort == 'offen' %} aria-current="true"{% endif %}>{{ _('sort.open') }}</a>
 {% if px_enabled %}<a class="sw" data-keep href="/?status={{ status }}&sort={{ sort }}{{ '' if hide_stopped else '&hide_stopped=1' }}"{% if hide_stopped %} aria-current="true"{% endif %}>{{ _('hide.stopped') }}</a>{% endif %}</div>
 {% for area, grp in groups.items() if grp.active or grp.dormant %}
-<section class="area"><h2>{{ area }} <small>{{ _('area.count', n=grp.active|length) }}{% if grp.dormant %}{{ _('area.dormant', n=grp.dormant|length) }}{% endif %}</small></h2>
+<section class="area" data-tab="projects"><h2>{{ area }} <small>{{ _('area.count', n=grp.active|length) }}{% if grp.dormant %}{{ _('area.dormant', n=grp.dormant|length) }}{% endif %}</small></h2>
 <div class="rows">
 {% for p, top, p1, last, g in grp.active %}{{ prow(p, top, p1, last, g) }}{% endfor %}
 </div>
@@ -75,7 +76,7 @@
 </section>
 {% endfor %}
 {% if px_enabled %}
-<section class="area"><h2>{{ _('guests.title') }} <small>{{ guests|length }}{{ _('guests.running') if hide_stopped }}</small></h2>
+<section class="area" data-tab="projects"><h2>{{ _('guests.title') }} <small>{{ guests|length }}{{ _('guests.running') if hide_stopped }}</small></h2>
 {% if guests %}<div class="rows">
 {% for g in guests %}<div class="row grow">
 <span class="name">{{ dot(g) }}{{ g.name }}</span>
@@ -123,4 +124,5 @@
 })();
 </script>
 {% include 'quickadd.html' %}
+{% with tab_active='today' %}{% include 'tabbar.html' %}{% endwith %}
 {% endblock %}

@@ -28,7 +28,12 @@
     return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       .then(function (r) { if (!r.ok) throw new Error(url + ' ' + r.status); return r; });
   }
+  function show(el, e) {
+    el.textContent = el.textContent.split(' [')[0] + ' [' + ((e && e.name) || 'Fehler') + ': ' + ((e && e.message) || e) + ']';
+    el.hidden = false;
+  }
   window.awbPasskey = {
+    show: show,
     login: function (next) {
       return fetch('/passkey/login/options').then(function (r) { return r.json(); }).then(function (o) {
         o.challenge = toBuf(o.challenge);

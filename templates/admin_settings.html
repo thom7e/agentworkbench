@@ -20,5 +20,5 @@
 <p><input id="pk-name" placeholder="{{ t('pk.name') }}" maxlength="60"> <button type="button" class="go" id="pk-add">{{ t('pk.add') }}</button></p>
 <p class="notice err" id="pk-err" hidden>{{ t('pk.fail') }}</p></section>
 <script src="/static/passkey.js"></script>
-<script>if(window.PublicKeyCredential){document.getElementById('pk-add').onclick=function(){window.awbPasskey.register(document.getElementById('pk-name').value||'Passkey').catch(function(){document.getElementById('pk-err').hidden=false})}}else{document.getElementById('pk-add').disabled=true}</script>
+<script>if(window.PublicKeyCredential){document.getElementById('pk-add').onclick=function(){window.awbPasskey.register(document.getElementById('pk-name').value||'Passkey').catch(function(e){window.awbPasskey.show(document.getElementById('pk-err'),e)})}}else{document.getElementById('pk-add').disabled=true}</script>
 {% endblock %}

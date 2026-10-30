@@ -78,7 +78,8 @@ async def register_verify(request: Request):
                                                 expected_rp_id=rp_id, expected_origin=origin, require_user_verification=True)
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print("passkey registration failed:", repr(e), flush=True)
         raise HTTPException(400, "registration failed")
     with closing(db()) as con:
         con.execute("INSERT INTO passkeys(cred_id,public_key,sign_count,name,created) VALUES(?,?,?,?,?)",
@@ -110,7 +111,8 @@ async def login_verify(request: Request):
                 credential=cred, expected_challenge=challenge, expected_rp_id=rp_id, expected_origin=origin,
                 credential_public_key=base64url_to_bytes(row["public_key"]), credential_current_sign_count=row["sign_count"],
                 require_user_verification=True)
-        except Exception:
+        except Exception as e:
+            print("passkey login failed:", repr(e), flush=True)
             raise HTTPException(401, "verification failed")
         con.execute("UPDATE passkeys SET sign_count=?, last_used=? WHERE id=?", (verified.new_sign_count, now(), row["id"]))
         con.commit()

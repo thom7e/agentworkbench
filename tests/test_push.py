@@ -52,6 +52,7 @@ def test_real_encryption_and_vapid_signing_path(tmp_path, monkeypatch):
 
     class Resp:
         status_code = 201
+        headers = {}
         ok = True
         text = ""
 

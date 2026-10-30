@@ -81,10 +81,10 @@ curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/js
 ### `POST /api/projects/{slug}/todos`
 
 ```json
-{"text": "Add rate limiting", "prio": 1, "kind": "todo"}
+{"text": "Add rate limiting", "short": "Limit requests per minute", "prio": 1, "kind": "todo", "check": ""}
 ```
 
-`prio` defaults to `2`, `kind` to `todo`. Returns `{"id": 42}`. Tasks created through the API are marked as coming from an agent and appear in the **inbox** until a person accepts, finishes or discards them.
+`prio` defaults to `2`, `kind` to `todo`. `short` is a one-line, plain-language title used in the morning briefing. `check` is an optional JSON string describing a machine check (see [Checks](deployment.md#morning-briefing-and-checks)); when it passes the task is ticked off automatically. Returns `{"id": 42}`. Tasks created through the API are marked as coming from an agent and appear in the **inbox** until a person accepts, finishes or discards them.
 
 ### `PATCH /api/todos/{id}`
 

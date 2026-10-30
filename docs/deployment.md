@@ -53,6 +53,24 @@ Examples for [Caddy](../examples/deploy/Caddyfile) and [nginx](../examples/deplo
 
 Alternatives to opening a port: a VPN such as WireGuard or Tailscale, or a tunnel with an access policy in front, for example Cloudflare Tunnel with Cloudflare Access. The app has its own login, but an extra layer in front costs little.
 
+## Morning briefing and checks
+
+Two small scripts run on a schedule (systemd timers or cron) next to the web app, with the same `AGENTWORKBENCH_DB`:
+
+```ini
+# dashboard-digest.service (timer: OnCalendar=*-*-* 07:00:00)
+[Service]
+Type=oneshot
+User=dashboard
+WorkingDirectory=/opt/dashboard
+Environment=AGENTWORKBENCH_DB=/var/lib/dashboard/dashboard.db
+ExecStart=/opt/dashboard/venv/bin/python digest.py
+```
+
+- `digest.py` builds the briefing and sends it as a web push (`python digest.py --print` only prints it). Open the app once, tap the bell on the briefing page and allow notifications; on iPhone this only works for the app added to the home screen, over HTTPS.
+- `checks.py` runs the machine checks of open tasks (`--dry` only reports). A check is a JSON object, for example `{"type": "http", "url": "https://example.com/robots.txt", "contains": "Sitemap:"}`, or `dns` (`host`, `ip`) or `port` (`host`, `port`); a list means all must pass.
+- Passkeys and push need HTTPS (a real domain or `localhost`). Put the app behind a reverse proxy as described above.
+
 ## Backups
 
 Everything is in the database file, including settings, tokens (as hashes) and the admin password hash.

@@ -29,7 +29,11 @@ One FastAPI process, one SQLite file, no build step. English and German UI. Inst
 - **Infrastructure view** (optional): read-only Proxmox integration shows live status and IP per project and lists all containers and VMs, with a switch to hide stopped ones.
 - **Admin area**: settings, projects, API tokens, JSON backup and Markdown import.
 - **Agent API** with revocable tokens.
-- **Phone app**: add it to the home screen, it opens full screen.
+- **Morning briefing** as a push notification: live and customer projects first, one plain-language line per task (each task has a short title), a *longer open* hint for old tasks. Tapping it opens the briefing page, where you choose which projects count as *live*.
+- **Checks that close tasks for you**: a task can carry a small machine check (page returns 200, text present, redirect, DNS, open port). A daily run ticks it off with a log entry once it passes.
+- **Passkey sign-in** (WebAuthn) next to the password.
+- **Phone app**: installable, works offline for reading, quick add with an offline queue, swipe to tick off, pull to refresh, web push.
+- **Desktop terminal** (optional, Windows): a button on each task opens a terminal in the project folder with your AI agent and the task as its starting prompt.
 
 ## Quick start
 

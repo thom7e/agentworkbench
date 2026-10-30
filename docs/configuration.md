@@ -22,6 +22,8 @@ Almost everything is configured in the admin area. A few values come from the en
 | **Default sorting** | Order of projects within a group: *recent activity* (newest first, using the later of the last log entry and the last GitHub push) or *open tasks* |
 | **GitHub account** | User or organisation whose repositories are listed |
 | **GitHub token** | Read-only token, see [Getting started](getting-started.md#optional-github). Leave the field empty to keep the stored token |
+| **Your first name** | Optional. Used in the greeting of the morning briefing |
+| **Contact for push messages** | A `mailto:` or `https` address sent to push services as the sender contact; Apple requires a valid value for web push to arrive |
 | **Obsidian vault name** | Optional. A note link without a web address becomes an `obsidian://open?vault=NAME&file=PATH` link |
 | **Proxmox address, token ID, token secret, verify TLS** | Optional, see [Proxmox integration](proxmox.md) |
 

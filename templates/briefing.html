@@ -8,7 +8,19 @@
 <h2>{{ _('briefing.projects') }}</h2>
 <p class="hint2">{{ _('live.hint') }}</p>
 <div class="brief-projects">
-{% for p in projects %}<form method="post" action="/p/{{ p.slug }}/live"><input type="hidden" name="next" value="/briefing"><label><input type="checkbox" name="live" value="1"{% if p.live %} checked{% endif %} onchange="this.form.submit()"> {{ p.name }}</label></form>{% endfor %}
+{% for p in projects %}<form method="post" action="/p/{{ p.slug }}/live"><input type="hidden" name="next" value="/briefing"><label><input type="checkbox" name="live" value="1"{% if p.live %} checked{% endif %}> {{ p.name }}</label></form>{% endfor %}
 </div>
 </section>
+<section><p><button class="push-btn" id="push-btn" type="button" hidden>&#128276; {{ _('push.enable') }}</button></p></section>
+<script>
+document.querySelectorAll('.brief-projects form').forEach(function (f) {
+  f.querySelector('input[type=checkbox]').addEventListener('change', function () {
+    fetch(f.action, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(new FormData(f)) })
+      .then(function () { return fetch('/briefing'); }).then(function (r) { return r.text(); }).then(function (t) {
+        var d = new DOMParser().parseFromString(t, 'text/html');
+        document.querySelector('.brief').innerHTML = d.querySelector('.brief').innerHTML;
+      });
+  });
+});
+</script>
 {% endblock %}

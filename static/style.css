@@ -253,3 +253,22 @@ button.act:hover{background:var(--hover)}
 body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top);background:var(--bg);z-index:30}
 .ptr{position:fixed;top:calc(env(safe-area-inset-top) + 8px);left:50%;transform:translate(-50%,0);opacity:0;font-size:26px;line-height:1;color:var(--accent);z-index:40;pointer-events:none}
 .ptr.spin{opacity:1!important;animation:ptrspin .8s linear infinite}@keyframes ptrspin{to{transform:translate(-50%,30px) rotate(360deg)}}
+
+/* Mobile polish, stage 1 */
+body{padding-bottom:calc(env(safe-area-inset-bottom) + 88px)}
+body::before{background:#1c1b19}
+.push-btn{position:static;width:auto;height:auto;padding:10px 16px;border-radius:999px;font-size:15px;font-family:inherit;color:inherit}
+.box{position:relative}.box::after{content:"";position:absolute;inset:-11px}
+.top nav a,.top nav button.linklike{padding-top:10px;padding-bottom:10px}
+.moves button{min-width:44px;min-height:44px}
+.qa-btns button{min-height:48px}.qa-btns .act{background:var(--accent);color:#fff;border:0}
+.qa-prio{display:flex;gap:6px}.qa-prio label{margin:0;position:relative}.qa-prio input{position:absolute;opacity:0;width:0;height:0}
+.qa-prio span{display:inline-block;min-width:48px;line-height:44px;text-align:center;border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.qa-prio input:checked+span{background:var(--accent);color:#fff;border-color:var(--accent)}
+.brief-projects label{display:flex;align-items:center;gap:12px;min-height:48px}.brief-projects input{width:22px;height:22px;flex:none}
+@media (max-width:700px){
+  .board-wrap{display:none}
+  .top nav .desk-only,.desk-only{display:none}
+  .top nav{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;gap:0 16px;scrollbar-width:none}
+  .top nav::-webkit-scrollbar{display:none}
+}

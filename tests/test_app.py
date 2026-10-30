@@ -338,3 +338,11 @@ def test_project_page_has_tabs(client):
     page = client.get("/p/demo-app").text
     for name in ("tasks", "notes", "docs", "log"):
         assert f'data-ptab-link="{name}"' in page and f'data-ptab="{name}"' in page
+
+
+def test_openproject_style_theme_is_selectable(client):
+    assert client.get("/design/op").status_code == 303
+    page = client.get("/").text
+    assert "/static/op.css?v=" in page and "/static/fresh.css" not in page and 'class="side"' in page
+    client.get("/design/fresh")
+    assert "/static/fresh.css?v=" in client.get("/").text

@@ -467,7 +467,7 @@ def web_live(slug: str, live: str = Form(""), next: str = Form("")):
 @app.get("/design/{name}")
 def set_design(name: str, next: str = "/"):
     resp = RedirectResponse(safe_next(next, "/"), status_code=303)
-    resp.set_cookie("design", "fresh" if name == "fresh" else "classic", max_age=60 * 60 * 24 * 365, samesite="lax")
+    resp.set_cookie("design", name if name in ("fresh", "op") else "classic", max_age=60 * 60 * 24 * 365, samesite="lax")
     return resp
 
 

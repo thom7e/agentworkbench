@@ -303,3 +303,16 @@ details.fold[open]>summary::after{transform:rotate(180deg)}
   body[data-tab="projects"] .hello h1,body[data-tab="projects"] .hello>p{display:none}
   .row .name{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
 }
+
+/* project page tabs: structure shared by all themes (themes add the colours) */
+.ptabs{display:flex;gap:4px;margin:16px 0 6px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.ptabs::-webkit-scrollbar{display:none}
+.ptabs button{flex:none;background:none;border:0;border-bottom:3px solid transparent;border-radius:0;margin-bottom:-1px;padding:10px 14px;min-height:44px;font:inherit;font-weight:600;color:var(--mut);cursor:pointer}
+.ptabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+.ptabs button span{margin-left:6px;padding:0 7px;border-radius:999px;background:var(--hover);font-size:12px}
+body[data-ptab="tasks"] [data-ptab="notes"],body[data-ptab="tasks"] [data-ptab="docs"],body[data-ptab="tasks"] [data-ptab="log"],
+body[data-ptab="notes"] [data-ptab="tasks"],body[data-ptab="notes"] [data-ptab="docs"],body[data-ptab="notes"] [data-ptab="log"],
+body[data-ptab="docs"] [data-ptab="tasks"],body[data-ptab="docs"] [data-ptab="notes"],body[data-ptab="docs"] [data-ptab="log"],
+body[data-ptab="log"] [data-ptab="tasks"],body[data-ptab="log"] [data-ptab="notes"],body[data-ptab="log"] [data-ptab="docs"]{display:none}
+body[data-ptab] .cols{display:block;max-width:820px}
+body[data-ptab] .cols section+section{margin-top:28px}

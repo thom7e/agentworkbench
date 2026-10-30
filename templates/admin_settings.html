@@ -15,7 +15,7 @@
 <label class="check"><input type="checkbox" name="proxmox_verify_tls" value="1"{% if s.proxmox_verify_tls == '1' %} checked{% endif %}> {{ t('set.px.verify') }}</label>
 <div><button class="go">{{ t('save') }}</button></div>
 </form>
-<section class="sheet"><h2>{{ t('design.title') }}</h2><p><a href="/design/fresh?next=/admin/settings">{{ t('design.fresh') }}</a> &nbsp; <a href="/design/classic?next=/admin/settings">{{ t('design.classic') }}</a></p></section>
+<section class="sheet"><h2>{{ t('design.title') }}</h2><p><a href="/design/fresh?next=/admin/settings">{{ t('design.fresh') }}</a> &nbsp; <a href="/design/op?next=/admin/settings">{{ t('design.op') }}</a> &nbsp; <a href="/design/classic?next=/admin/settings">{{ t('design.classic') }}</a></p></section>
 <section class="sheet"><form method="post" action="/logout"><button class="linklike">{{ _('logout') }}</button></form></section>
 <section class="sheet"><h2>{{ t('pk.title') }}</h2><p class="hint2">{{ t('pk.help') }}</p>
 {% for k in passkeys %}<p class="pk-row">{{ k.name }} · {{ k.created[:10] }}{% if k.last_used %} · {{ t('pk.used') }} {{ k.last_used[:10] }}{% endif %} <button type="button" class="linklike" onclick="fetch('/passkey/{{ k.id }}/delete',{method:'POST'}).then(function(){location.reload()})">{{ t('pk.delete') }}</button></p>{% else %}<p>{{ t('pk.none') }}</p>{% endfor %}

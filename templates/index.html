@@ -2,7 +2,7 @@
 {% block body %}
 {% macro dot(g) %}{% if g %}<span class="dot {{ 'on' if g.status == 'running' else 'off' }}" title="{{ 'LXC' if g.type == 'lxc' else 'VM' }} {{ g.vmid }} {{ g.name }} {{ _('guest.on') }} {{ g.node }}: {{ g.status }}"></span>{% endif %}{% endmacro %}
 {% macro prow(p, top, p1, last, g) %}<a class="row" href="/p/{{ p.slug }}">
-<span class="name">{{ dot(g) }}{{ p.name }}{% if p.live %} <span class="live">{{ _('badge.live') }}</span>{% endif %}</span>
+<span class="name"><span class="nm">{{ p.name }}</span><span class="tags">{% if p.live %}<span class="live">{{ _('badge.live') }}</span>{% else %}<span></span>{% endif %}{% if g %}<span class="host {{ 'on' if g.status == 'running' else 'off' }}" title="{{ 'LXC' if g.type == 'lxc' else 'VM' }} {{ g.vmid }} {{ g.name }} {{ _('guest.on') }} {{ g.node }}: {{ g.status }}">{{ 'LXC' if g.type == 'lxc' else 'VM' }}</span>{% else %}<span></span>{% endif %}</span></span>
 <span class="next">{% if top %}{{ top.text|replace('**','') }}{% else %}–{% endif %}</span>
 <span class="count">{% if p1 %}<b>{{ _('row.urgent', n=p1) }}</b>, {% endif %}{{ _('row.open', n=p.open_n) }}</span>
 <span class="age">{{ last|ago }}</span>

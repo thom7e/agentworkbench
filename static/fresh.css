@@ -117,4 +117,18 @@ body::before{background:var(--surface)}
 .row{border-radius:0}
 .row .name{display:flex;align-items:center;gap:8px;min-width:0}
 .row .name .live{margin-left:0;flex:none}
-@media (min-width:761px){.row{grid-template-columns:minmax(280px,1.3fr) minmax(0,2.2fr) 130px 110px}}
+@media (min-width:761px){.row{grid-template-columns:minmax(400px,1.7fr) minmax(0,1.7fr) 120px 100px}}
+
+/* project rows: name on the left, fixed slots for the live pill and the host tag so they line up in columns */
+.row .name{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}
+.row .name .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .name .tags{display:grid;grid-template-columns:64px 44px;gap:8px;justify-items:start;align-items:center}
+.row .name .live{margin:0}
+.row .host{padding:1px 8px;border-radius:6px;font-size:12px;font-weight:650;background:color-mix(in srgb,var(--lamp-idle) 22%,transparent);color:var(--mut)}
+.row .host.on{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}
+@media (max-width:700px){
+  .row .name{display:block;position:relative;padding-left:18px}
+  .row .name .tags{display:contents}
+  .row .name .live{position:absolute;left:0;top:50%;transform:translateY(-50%);padding:0;background:none;font-size:0;gap:0}
+  .row .host{display:none}
+}

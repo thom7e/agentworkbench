@@ -4,7 +4,18 @@
 
 [English](README.md) · Deutsch
 
-**Eine gemeinsame Sicht auf alle Projekte, für dich und deine KI-Agenten.**
+**Eine gemeinsame Sicht auf alle Projekte, für dich und deine KI-Agenten. Deine Agenten lesen nicht mehr ganze Dateien, sondern starten mit etwa 100 bis 400 Tokens Kontext.**
+
+> **Warum das Tokens spart**
+> Ohne gemeinsames Gedächtnis liest jeder Agent zu Beginn Notizen, TODO-Dateien und alte Chats: schnell 5.000 bis 20.000 Tokens, und beim nächsten Mal wieder. AgentWorkbench gibt dem Agenten stattdessen ein kurzes Briefing pro Projekt.
+>
+> | Gemessen an einer echten Instanz (89 Projekte, 90 Dokumente) | Tokens |
+> |---|---|
+> | Übersicht aller Projekte | etwa 1.700 |
+> | Briefing eines Projekts, Median / Durchschnitt | etwa 120 / 420 |
+> | Dokumente, nur bei Bedarf gelesen (Durchschnitt je Dokument) | etwa 2.600 |
+>
+> Geschätzte Ersparnis: **etwa 90 % der Kontext-Tokens pro Sitzung**, von 5.000 bis 20.000 auf wenige hundert. Prüfregeln und Morgen-Briefing laufen ganz ohne KI und kosten keine Tokens. (Die Ersparnis ist eine Schätzung auf Basis typischer Notiz- und TODO-Dateien. Die Größen sind gemessen, 1 Token wird mit 3,6 Zeichen gerechnet.)
 
 AgentWorkbench ist ein kleines Dashboard zum Selbsthosten. Du öffnest es morgens (oder bekommst es als Benachrichtigung) und siehst, was zählt: was live und beim Kunden ist, was dringend ist, was deine Agenten getan haben und was sich auf GitHub geändert hat. Agenten wie [Claude Code](https://claude.com/claude-code) lesen vor der Arbeit ein kurzes Briefing, haken Aufgaben ab und hinterlassen Notizen für das nächste Mal. So muss nichts zweimal erklärt werden.
 

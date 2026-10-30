@@ -4,7 +4,18 @@
 
 English · [Deutsch](README.de.md)
 
-**One shared view of all your projects, for you and your AI agents.**
+**One shared view of all your projects, for you and your AI agents. Your agents stop re-reading files and start with about 100 to 400 tokens of context.**
+
+> **Why it saves tokens**
+> Without shared memory, every agent session starts by reading notes, TODO files and old chats: easily 5,000 to 20,000 tokens, and the same again next time. AgentWorkbench hands the agent one short briefing per project instead.
+>
+> | Measured on a real instance (89 projects, 90 documents) | Tokens |
+> |---|---|
+> | Overview of all projects | about 1,700 |
+> | Briefing of one project, median / average | about 120 / 420 |
+> | Documents, read only when needed (average, per document) | about 2,600 |
+>
+> Estimated saving: **roughly 90 % of the context tokens per session**, from 5,000 to 20,000 down to a few hundred. Machine checks and the morning briefing run without any AI, so they cost no tokens at all. (The saving is an estimate based on typical note and TODO files. The sizes are measured, 1 token is counted as 3.6 characters.)
 
 AgentWorkbench is a small self-hosted dashboard. You open it in the morning (or get it as a notification) and see what matters: what is live and at the customer, what is urgent, what your agents did and what changed on GitHub. Agents such as [Claude Code](https://claude.com/claude-code) read a short briefing before they start, tick off tasks and leave notes for the next time, so nothing has to be re-explained.
 

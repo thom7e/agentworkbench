@@ -325,16 +325,10 @@ def test_passkey_register_and_login_roundtrip(client):
     assert client.post(f"/passkey/{pid}/delete").status_code == 204
 
 
-def test_openproject_style_is_default_others_are_cookies(client):
+def test_single_design_with_side_menu(client):
     page = client.get("/").text
-    assert "/static/op.css?v=" in page and "/static/fresh.css" not in page and 'class="side"' in page
-    assert client.get("/design/fresh").status_code == 303
-    assert "/static/fresh.css?v=" in client.get("/").text
-    assert client.get("/design/classic").status_code == 303
-    assert 'class="side"' not in client.get("/").text
-    client.get("/design/op")
-    assert "/static/op.css?v=" in client.get("/").text
-
+    assert "/static/op.css?v=" in page and 'class="has-side"' in page and 'class="side"' in page
+    assert "fresh.css" not in page and client.get("/design/fresh").status_code == 404
 
 def test_project_page_has_tabs(client):
     page = client.get("/p/demo-app").text

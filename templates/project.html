@@ -8,21 +8,27 @@
 {% if p.repo %}<a href="https://github.com/{{ p.repo }}">{{ p.repo }}</a>{% endif %}{% if p.wiki %}<a href="{{ p.wiki }}">Wiki</a>{% endif %}
 {% for label, url in linked_notes(p) %}<a href="{{ url }}">{{ label }}</a>{% endfor %}<a href="/admin/projects/{{ p.slug }}">{{ _('proj.edit') }}</a></div>
 {% if p.summary %}<p class="lead">{{ p.summary }}</p>{% endif %}</div>
+<nav class="ptabs" aria-label="{{ _('ptab.nav') }}">
+<button type="button" data-ptab-link="tasks">{{ _('ptab.tasks') }} <span>{{ todos|selectattr('done', 'equalto', 0)|list|length }}</span></button>
+<button type="button" data-ptab-link="notes">{{ _('ptab.notes') }} <span>{{ notes|length }}</span></button>
+<button type="button" data-ptab-link="docs">{{ _('ptab.docs') }} <span>{{ docs|length }}</span></button>
+<button type="button" data-ptab-link="log">{{ _('ptab.log') }}</button>
+</nav>
 
 <div class="cols"><div>
 {% for kind in ('todo','idee') %}
-<section><h2>{{ _('sec.open') if kind == 'todo' else _('sec.ideas') }}</h2><div class="sheet">
+<section data-ptab="tasks"><h2>{{ _('sec.open') if kind == 'todo' else _('sec.ideas') }}</h2><div class="sheet">
 {% for t in todos if t.kind == kind and not t.done %}
 <div class="task{{ ' urgent' if t.prio == 1 }}"><form method="post" action="/t/{{ t.id }}/toggle"><button class="box" aria-label="{{ _('task.done') }}"></button></form>
 <span class="txt">{% if t.prio == 1 %}<span class="prio">{{ _('tag.urgent') }}</span>{% endif %}{{ t.text|replace('**','') }}</span></div>
 {% else %}<p class="empty">{{ _('empty.open') if kind == 'todo' else _('empty.ideas') }}</p>{% endfor %}
 </div></section>{% endfor %}
-<form class="add taskadd" method="post" action="/p/{{ p.slug }}/add">
+<form class="add taskadd" data-ptab="tasks" method="post" action="/p/{{ p.slug }}/add">
 <input name="text" placeholder="{{ _('add.ph') }}" required aria-label="{{ _('add.ph') }}">
 <select name="kind" aria-label="{{ _('add.kind') }}"><option value="todo">{{ _('kind.todo') }}</option><option value="idee">{{ _('kind.idee') }}</option></select>
 <select name="prio" aria-label="{{ _('add.prio') }}"><option value="1">{{ _('popt.1') }}</option><option value="2" selected>{{ _('popt.2') }}</option><option value="3">{{ _('popt.3') }}</option></select>
 <button class="go">{{ _('add.btn') }}</button></form>
-<section><h2>{{ _('notes.title') }} <small class="hint">{{ _('notes.hint') }}</small></h2>
+<section data-ptab="notes"><h2>{{ _('notes.title') }} <small class="hint">{{ _('notes.hint') }}</small></h2>
 <form class="add notesadd" method="post" action="/p/{{ p.slug }}/notes">
 <textarea name="text" rows="3" placeholder="{{ _('notes.ph') }}" required aria-label="{{ _('notes.aria') }}"></textarea>
 <label class="check"><input type="checkbox" name="pinned" value="1"> {{ _('notes.pin') }}</label><button class="go">{{ _('notes.save') }}</button></form>
@@ -32,28 +38,28 @@
 <form class="inline" method="post" action="/n/{{ n.id }}/delete"><button class="linklike del" title="{{ _('notes.del.tip') }}">{{ _('notes.del') }}</button></form></span></header>
 <div class="md">{{ n.text|md }}</div></article>{% else %}<p class="empty">{{ _('notes.empty') }}</p>{% endfor %}
 </section>
-<section><details class="fold" data-closed-mobile><summary><h2>{{ _('done.title') }}</h2></summary><div class="sheet">
+<section data-ptab="tasks"><details class="fold" data-closed-mobile><summary><h2>{{ _('done.title') }}</h2></summary><div class="sheet">
 {% for t in todos if t.done %}<div class="task t-done"><form method="post" action="/t/{{ t.id }}/toggle"><button class="box checked" aria-label="{{ _('done.reopen') }}"></button></form>
 <div><span class="txt">{{ t.text|replace('**','') }}</span><time>{{ t.done_at|fmtdate }}</time></div></div>
 {% else %}<p class="empty">{{ _('done.empty') }}</p>{% endfor %}
 </div></details></section></div>
 
 <div>
-{% if guest %}<section><h2>{{ _('host.title') }}</h2><div class="sheet hostcard">
+{% if guest %}<section data-ptab="log"><h2>{{ _('host.title') }}</h2><div class="sheet hostcard">
 <p><span class="dot {{ 'on' if guest.status == 'running' else 'off' }}"></span><b>{{ 'LXC' if guest.type == 'lxc' else 'VM' }} {{ guest.vmid }} · {{ guest.name }}</b> <span class="hint2">{{ guest.status }}</span></p>
 <p>Node {{ guest.node }}{% if guest.ip %} · IP <code>{{ guest.ip }}</code>{% endif %}</p>
 <p class="hint2">{{ _('host.stats', c=(guest.cpu * 100)|round(0)|int, m=guest.mem|gb, x=guest.maxmem|gb, u=guest.uptime|uptime) }}</p></div></section>
-{% elif p.vmid %}<section><h2>{{ _('host.title') }}</h2><div class="sheet hostcard"><p class="hint2">{{ _('host.nodata', n=p.vmid) }}</p></div></section>{% endif %}
-{% if gh %}<section><h2>{{ _('git.title') }}</h2>
+{% elif p.vmid %}<section data-ptab="log"><h2>{{ _('host.title') }}</h2><div class="sheet hostcard"><p class="hint2">{{ _('host.nodata', n=p.vmid) }}</p></div></section>{% endif %}
+{% if gh %}<section data-ptab="log"><h2>{{ _('git.title') }}</h2>
 {% if gh.readme or gh.description %}<p class="readme">{{ gh.readme or gh.description }}</p>{% endif %}
 <p class="branches">{{ _('git.branches') }}: {% for b in gh.branches %}<span class="br{{ ' main' if b == gh.default_branch }}">{{ b }}</span>{% endfor %}</p>
 <ul class="commits">{% for c in gh.commits %}<li><a href="{{ c.url }}"><code>{{ c.sha }}</code> {{ c.msg|truncate(90) }}</a><time>{{ c.date }}</time></li>{% endfor %}</ul>
 </section>{% endif %}
-<section><details class="fold" data-closed-mobile><summary><h2>{{ _('log.title') }}</h2></summary>
+<section data-ptab="log"><h2>{{ _('log.title') }}</h2>
 <ul class="log">{% for a in log %}<li><time>{{ a.ts|fmtdate }}</time>{{ a.text }}</li>{% else %}<li class="empty">{{ _('log.empty') }}</li>{% endfor %}</ul>
 <form class="add" method="post" action="/p/{{ p.slug }}/log"><input name="text" placeholder="{{ _('log.ph') }}" required aria-label="{{ _('log.aria') }}"><button class="go">{{ _('log.btn') }}</button></form>
-</details></section></div></div>
-<section class="docs" id="docs"><h2>{{ _('docs.title') }} <small class="hint">{{ _('docs.hint') }}</small></h2>
+</section></div></div>
+<section class="docs" id="docs" data-ptab="docs"><h2>{{ _('docs.title') }} <small class="hint">{{ _('docs.hint') }}</small></h2>
 {% for d in docs %}<details class="doc" id="doc-{{ d.id }}"{% if loop.length == 1 %} open{% endif %}>
 <summary><span class="dt">{{ d.title }}</span><span class="dm">{{ d.updated|fmtdate }}</span></summary>
 <div class="docbody"><div class="md">{{ d.body|md }}</div>

@@ -332,3 +332,9 @@ def test_fresh_design_is_default_and_classic_is_a_cookie(client):
     assert 'class="side"' not in client.get("/").text
     client.get("/design/fresh")
     assert 'class="side"' in client.get("/").text
+
+
+def test_project_page_has_tabs(client):
+    page = client.get("/p/demo-app").text
+    for name in ("tasks", "notes", "docs", "log"):
+        assert f'data-ptab-link="{name}"' in page and f'data-ptab="{name}"' in page

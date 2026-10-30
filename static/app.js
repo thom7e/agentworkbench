@@ -31,6 +31,21 @@
     });
   }
 
+  // Project page: one section at a time (tasks, notes, documents, activity)
+  var ptabLinks = document.querySelectorAll('[data-ptab-link]');
+  if (ptabLinks.length) {
+    var setPtab = function (name, keepHash) {
+      document.body.dataset.ptab = name;
+      ptabLinks.forEach(function (b) { b.classList.toggle('on', b.dataset.ptabLink === name); });
+      if (!keepHash) history.replaceState(null, '', name === 'tasks' ? location.pathname + location.search : '#' + name);
+    };
+    var hash = location.hash.replace('#', '');
+    var start = hash.indexOf('doc') === 0 ? 'docs' : (['notes', 'docs', 'log'].indexOf(hash) >= 0 ? hash : 'tasks');
+    setPtab(start, true);
+    ptabLinks.forEach(function (b) { b.addEventListener('click', function () { setPtab(b.dataset.ptabLink); }); });
+    if (hash.indexOf('doc-') === 0) { var target = document.getElementById(hash); if (target) { target.open = true; target.scrollIntoView(); } }
+  }
+
   // Inbox: only the first two entries on the phone
   var inbox = document.querySelector('.inbox[data-more]');
   if (inbox && mobile) {

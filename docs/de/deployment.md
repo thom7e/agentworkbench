@@ -25,6 +25,24 @@ docker compose up -d --build
 
 Datenbankänderungen werden beim Start automatisch eingespielt.
 
+## Veröffentlichtes Docker-Image
+
+Der Workflow `Publish Docker image` testet und veröffentlicht `ghcr.io/thom7e/agentworkbench`, wenn ein Maintainer einen `v*`-Tag pusht. Das Image ist erst nach der ersten erfolgreichen Veröffentlichung verfügbar. Jedes Image verwendet den genauen Git-Tag, etwa `vX.Y.Z` unten (durch eine verfügbare Version ersetzen); ein `latest`-Tag wird nicht veröffentlicht.
+
+Für eine neue Installation, ohne das Repository zu klonen:
+
+```bash
+docker run -d --name agentworkbench --restart unless-stopped \
+  -p 127.0.0.1:8000:8000 -v agentworkbench-data:/data \
+  ghcr.io/thom7e/agentworkbench:vX.Y.Z
+```
+
+Öffne <http://localhost:8000> und lege das Admin-Passwort fest. Der Port ist nur auf Loopback veröffentlicht; der unprivilegierte Benutzer, der `/healthz`-Health-Check und das persistente Verzeichnis `/data` entsprechen dem lokal gebauten Image. Für den Zugriff von einem anderen Rechner nutze die HTTPS-Reverse-Proxy-Hinweise unten.
+
+Verwende entweder Compose oder `docker run`, da die Beispiele denselben Containernamen und Port nutzen. Compose stellt dem Volume normalerweise den Projektnamen voran; das `docker run`-Beispiel nutzt das wörtliche Volume `agentworkbench-data`. Um eine vorhandene Installation zu übernehmen, stoppe zuerst ihren Container und binde ihr tatsächliches Daten-Volume ein. Verbinde dieselbe Datenbank nicht mit zwei laufenden Instanzen. Sichere die Daten vor einem Versionswechsel und behalte das Daten-Volume beim Ersetzen eines Containers.
+
+Der Maintainer muss [das GHCR-Paket öffentlich machen](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#pushing-container-images), damit `docker pull` oder `docker run` ohne Anmeldung funktioniert; ein erfolgreicher Workflow allein belegt keine öffentliche Sichtbarkeit.
+
 ## Reines Python mit systemd
 
 ```bash

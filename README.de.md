@@ -132,6 +132,16 @@ docker compose up -d
 
 Dann <http://localhost:8000> öffnen. Beim ersten Besuch legst du das Admin-Passwort fest. Die Daten liegen im Volume `agentworkbench-data`. Die Sprache stellst du unter **Verwaltung → Einstellungen** auf Deutsch.
 
+Alternativ kannst du nach der ersten erfolgreichen `v*`-Image-Veröffentlichung durch einen Maintainer eine neue Installation ohne Klonen oder Bauen starten. Ersetze `vX.Y.Z` durch einen veröffentlichten Versionstag; der Workflow veröffentlicht kein `latest`:
+
+```bash
+docker run -d --name agentworkbench --restart unless-stopped \
+  -p 127.0.0.1:8000:8000 -v agentworkbench-data:/data \
+  ghcr.io/thom7e/agentworkbench:vX.Y.Z
+```
+
+Wähle eine Docker-Methode: Beide verwenden denselben Containernamen und Port. Hinweise zu vorhandenen Compose-Daten und zur Image-Verfügbarkeit stehen unter [Betrieb](docs/de/deployment.md#veröffentlichtes-docker-image).
+
 ### Python
 
 ```bash

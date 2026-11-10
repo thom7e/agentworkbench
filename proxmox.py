@@ -1,6 +1,7 @@
 import json
 import re
 import ssl
+import threading
 import time
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -26,16 +27,23 @@ def _request(path):
         return json.loads(r.read().decode("utf-8"))["data"]
 
 
+def _fetch(path):
+    try:
+        data = _request(path)
+    except Exception:
+        return None
+    _cache[path] = (time.time(), data)
+    return data
+
+
 def _get(path, ttl):
     hit = _cache.get(path)
     if hit and time.time() - hit[0] < ttl:
         return hit[1]
-    try:
-        data = _request(path)
-    except Exception:
-        return hit[1] if hit else None
-    _cache[path] = (time.time(), data)
-    return data
+    if hit:
+        threading.Thread(target=_fetch, args=(path,), daemon=True).start()
+        return hit[1]
+    return _fetch(path)
 
 
 def _ip(guest):

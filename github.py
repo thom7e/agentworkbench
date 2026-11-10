@@ -1,5 +1,6 @@
 import json
 import os
+import threading
 import time
 import urllib.request
 
@@ -13,11 +14,7 @@ def _token():
     return settings.get("github_token") or os.environ.get("GITHUB_TOKEN", "")
 
 
-def _get(path, raw=False):
-    key = (path, raw, _token())
-    hit = _cache.get(key)
-    if hit and time.time() - hit[0] < TTL:
-        return hit[1]
+def _fetch(key, path, raw):
     headers = {
         "Accept": "application/vnd.github.raw+json" if raw else "application/vnd.github+json",
         "User-Agent": "agentworkbench",
@@ -30,9 +27,20 @@ def _get(path, raw=False):
             body = r.read().decode("utf-8")
         data = body if raw else json.loads(body)
     except Exception:
-        return hit[1] if hit else None
+        return None
     _cache[key] = (time.time(), data)
     return data
+
+
+def _get(path, raw=False):
+    key = (path, raw, _token())
+    hit = _cache.get(key)
+    if hit and time.time() - hit[0] < TTL:
+        return hit[1]
+    if hit:
+        threading.Thread(target=_fetch, args=(key, path, raw), daemon=True).start()
+        return hit[1]
+    return _fetch(key, path, raw)
 
 
 def enabled():

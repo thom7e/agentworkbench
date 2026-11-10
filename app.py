@@ -1,3 +1,5 @@
+import threading
+import time
 from contextlib import closing
 from datetime import datetime
 
@@ -20,6 +22,20 @@ from db import BASE, db, now
 from render import ago_days, templates
 
 database.init()
+
+
+def _warm():
+    while True:
+        try:
+            proxmox.guests()
+            github.pushed_map()
+            github.open_prs()
+        except Exception:
+            pass
+        time.sleep(45)
+
+
+threading.Thread(target=_warm, daemon=True).start()
 
 app = FastAPI(title="AgentWorkbench")
 app.middleware("http")(auth.middleware)

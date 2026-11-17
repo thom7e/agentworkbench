@@ -490,6 +490,12 @@ class LogIn(BaseModel):
     text: str
 
 
+class PushIn(BaseModel):
+    title: str
+    body: str = ""
+    url: str = "/"
+
+
 class ProjectIn(BaseModel):
     slug: str
     name: str
@@ -711,6 +717,11 @@ def api_log(slug: str, e: LogIn):
         con.execute("INSERT INTO activity(project,text,ts) VALUES(?,?,?)", (slug, e.text, now()))
         con.commit()
     return {"ok": True}
+
+
+@app.post("/api/push")
+def api_push(e: PushIn):
+    return {"sent": push.send(e.title, e.body, e.url)}
 
 
 @app.get("/export/notes.md", response_class=PlainTextResponse)

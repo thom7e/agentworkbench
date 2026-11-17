@@ -132,6 +132,16 @@ docker compose up -d
 
 Open <http://localhost:8000>. The first visit asks you to choose the admin password. Data lives in the `agentworkbench-data` volume.
 
+Alternatively, after a maintainer's first successful `v*` image publication, start a fresh install without cloning or building. Replace `vX.Y.Z` with a published version tag; the workflow does not publish `latest`:
+
+```bash
+docker run -d --name agentworkbench --restart unless-stopped \
+  -p 127.0.0.1:8000:8000 -v agentworkbench-data:/data \
+  ghcr.io/thom7e/agentworkbench:vX.Y.Z
+```
+
+Choose one Docker method: they use the same container name and port. For existing Compose data and image availability, see [Deployment](docs/deployment.md#published-docker-image).
+
 ### Python
 
 ```bash

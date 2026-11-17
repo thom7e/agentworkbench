@@ -25,6 +25,24 @@ docker compose up -d --build
 
 Database changes are applied automatically at start.
 
+## Published Docker image
+
+The `Publish Docker image` workflow tests and publishes `ghcr.io/thom7e/agentworkbench` when a maintainer pushes a `v*` tag. The image becomes available only after the first successful publication. Each image uses the exact Git tag, such as `vX.Y.Z` below (replace it with an available version); no `latest` tag is published.
+
+For a fresh install, without cloning the repository:
+
+```bash
+docker run -d --name agentworkbench --restart unless-stopped \
+  -p 127.0.0.1:8000:8000 -v agentworkbench-data:/data \
+  ghcr.io/thom7e/agentworkbench:vX.Y.Z
+```
+
+Open <http://localhost:8000> and choose the admin password. The port is published on loopback only; the non-root user, `/healthz` health check and persistent `/data` directory are the same as in the locally built image. For access from another machine, use the HTTPS reverse-proxy guidance below.
+
+Use either Compose or `docker run`, since the examples share a container name and port. Compose normally prefixes its volume with the project name; the `docker run` example uses the literal `agentworkbench-data` volume. To reuse an existing installation, stop its container first and mount its actual data volume instead. Do not attach the same database to two running instances. Back up the data before changing image versions, and keep the data volume when replacing a container.
+
+The maintainer must [make the GHCR package public](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#pushing-container-images) for an unauthenticated `docker pull` or `docker run`; workflow success alone does not establish public visibility.
+
 ## Plain Python with systemd
 
 ```bash

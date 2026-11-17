@@ -97,7 +97,7 @@ curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/js
 | `kind` | Standard `todo` |
 | `check` | Optionale Maschinenprüfung als JSON-**String**, siehe [Briefing und Prüfregeln](briefing-and-checks.md#prüfregeln). Besteht sie, wird die Aufgabe automatisch abgehakt |
 
-Antwortet mit `{"id": 42}`. Über die API angelegte Aufgaben sind als von einem Agenten stammend markiert und erscheinen im **Posteingang**, bis ein Mensch sie übernimmt, abschließt oder verwirft.
+Antwortet mit `{"id": 42}`. Über die API angelegte Aufgaben sind als von einem Agenten stammend markiert und landen direkt im Board.
 
 ### `PATCH /api/todos/{id}`
 

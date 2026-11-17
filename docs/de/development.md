@@ -48,7 +48,7 @@ Fülle sie vorher mit Demodaten, wenn du magst: `AGENTWORKBENCH_DB=./dev.db pyth
 pytest
 ```
 
-Die Tests starten die App gegen eine temporäre Datenbank und decken Einrichtung, Anmeldung, Passkeys (mit einem Software-Authenticator), die API, den Posteingang, Notizen, Dokumente, Suche, das Briefing, Prüfregeln, Push, die Proxmox-Anbindung (mit gefälschtem Proxmox), Übersetzungen und die Demodaten ab. Der CI-Workflow in `.github/workflows/ci.yml` führt sie aus, baut außerdem das Docker-Image, startet es und prüft den Health-Endpunkt.
+Die Tests starten die App gegen eine temporäre Datenbank und decken Einrichtung, Anmeldung, Passkeys (mit einem Software-Authenticator), die API, Notizen, Dokumente, Suche, das Briefing, Prüfregeln, Push, die Proxmox-Anbindung (mit gefälschtem Proxmox), Übersetzungen und die Demodaten ab. Der CI-Workflow in `.github/workflows/ci.yml` führt sie aus, baut außerdem das Docker-Image, startet es und prüft den Health-Endpunkt.
 
 ## Datenbankänderungen
 
@@ -56,7 +56,7 @@ Die Tests starten die App gegen eine temporäre Datenbank und decken Einrichtung
 
 ## Übersetzungen
 
-Texte haben Schlüssel: `_('inbox.title')` in Vorlagen, `t('key')` in Python. Füge einen Schlüssel in beide Wörterbücher in `i18n.py` oder `i18n_ui.py` ein. Texte mit Platzhaltern nutzen `{name}` und werden mit Schlüsselwort-Argumenten aufgerufen: `_('row.open', n=3)`. Das Briefing (`digest.py`) und die Prüfmeldungen (`checks.py`) haben ihre kleinen Wörterbücher im Modul selbst.
+Texte haben Schlüssel: `_('board.title')` in Vorlagen, `t('key')` in Python. Füge einen Schlüssel in beide Wörterbücher in `i18n.py` oder `i18n_ui.py` ein. Texte mit Platzhaltern nutzen `{name}` und werden mit Schlüsselwort-Argumenten aufgerufen: `_('row.open', n=3)`. Das Briefing (`digest.py`) und die Prüfmeldungen (`checks.py`) haben ihre kleinen Wörterbücher im Modul selbst.
 
 Um eine Sprache hinzuzufügen, trage ihr Kürzel in die Wörterbücher ein (`TEXTS` in `i18n.py`, ein neues Wörterbuch neben `UI_DE` und `UI_EN` in `i18n_ui.py`, dazu `TEXT` in `digest.py` und `checks.py`) sowie in die erlaubten Werte in `render.lang()` und in `settings_save` in `admin.py`, und füge dann eine Option in `admin_settings.html` ein. Fehlende Schlüssel fallen auf Englisch zurück.
 

@@ -30,7 +30,7 @@ All settings are described in [Configuration](configuration.md).
 
 ### Optional: GitHub
 
-With a GitHub account and a read-only token, project pages show branches and the latest commits, the project list shows the time of the last push, and open pull requests appear in the inbox and the briefing.
+With a GitHub account and a read-only token, project pages show branches and the latest commits, the project list shows the time of the last push, and open pull requests appear on the start page and in the briefing.
 
 1. Open <https://github.com/settings/personal-access-tokens/new>
 2. Resource owner: your account. Repository access: *All repositories* (so new repositories appear automatically)
@@ -67,7 +67,7 @@ A project page has four tabs: **Tasks** (open tasks, ideas, finished), **Notes**
 On the home page:
 
 - **Today first** lists all urgent tasks (priority 1) of the active projects.
-- The **inbox** appears when agents have created tasks. For each task choose *Accept* (keep it), *Already done* (store it as done) or *Discard* (delete it).
+- Tasks created by agents go straight onto the board. Open pull requests are listed on the start page.
 - The **priority board** (folded by default on the desktop) shows every open task in three columns. Drag a card to change its priority.
 - On the phone, the bottom bar switches between **Today**, **Projects**, **Briefing** and **More**. The **+** button adds a task from anywhere.
 
@@ -95,7 +95,7 @@ Everything is searchable from the search field on the home page.
 ## A typical day
 
 1. The briefing arrives. Tap it, read what is urgent in your live projects.
-2. Look at the *Inbox* and accept or discard what agents proposed.
+2. Look at *Recent activity* to see what agents did and added.
 3. Pick a project, let the agent read its briefing and work (on Windows, the `>_` button opens a terminal for a task).
 4. At the end the agent logs what it did and leaves a note for anything worth remembering.
 5. Checks close what they can prove. The next morning the briefing shows the new state.

@@ -10,6 +10,7 @@ import settings
 
 LIST_TTL = 60
 CONFIG_TTL = 600
+RETRY = 30
 _cache = {}
 
 
@@ -27,11 +28,13 @@ def _request(path):
         return json.loads(r.read().decode("utf-8"))["data"]
 
 
-def _fetch(path):
+def _fetch(path, ttl):
     try:
         data = _request(path)
     except Exception:
-        return None
+        old = _cache.get(path, (0, None))[1]
+        _cache[path] = (time.time() - ttl + RETRY, old)
+        return old
     _cache[path] = (time.time(), data)
     return data
 
@@ -41,9 +44,9 @@ def _get(path, ttl):
     if hit and time.time() - hit[0] < ttl:
         return hit[1]
     if hit:
-        threading.Thread(target=_fetch, args=(path,), daemon=True).start()
+        threading.Thread(target=_fetch, args=(path, ttl), daemon=True).start()
         return hit[1]
-    return _fetch(path)
+    return _fetch(path, ttl)
 
 
 def _ip(guest):

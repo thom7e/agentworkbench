@@ -2,8 +2,10 @@ import threading
 import time
 from contextlib import closing
 from datetime import datetime
+from typing import Literal
 
 from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -30,6 +32,10 @@ def _warm():
             proxmox.guests()
             github.pushed_map()
             github.open_prs()
+            with closing(db()) as con:
+                repos = [r[0] for r in con.execute("SELECT repo FROM projects WHERE status='aktiv' AND repo!=''")]
+            for repo in repos:
+                github.repo_detail(repo)
         except Exception:
             pass
         time.sleep(45)
@@ -39,6 +45,7 @@ threading.Thread(target=_warm, daemon=True).start()
 
 app = FastAPI(title="AgentWorkbench")
 app.middleware("http")(auth.middleware)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 
 
@@ -98,7 +105,10 @@ def project_or_404(con, slug):
 def brief(con, slug):
     p = project_or_404(con, slug)
     todos = con.execute(
-        "SELECT * FROM todos WHERE project=? ORDER BY done, kind, prio, id", (slug,)
+        "SELECT * FROM todos WHERE project=? AND done=0 ORDER BY kind, prio, id", (slug,)
+    ).fetchall()
+    done = con.execute(
+        "SELECT * FROM todos WHERE project=? AND done=1 ORDER BY done_at DESC, id DESC LIMIT 5", (slug,)
     ).fetchall()
     log = con.execute(
         "SELECT * FROM activity WHERE project=? ORDER BY id DESC LIMIT 8", (slug,)
@@ -126,11 +136,10 @@ def brief(con, slug):
             for n in rows:
                 out.append(f"### #{n['id']} {n['created']} ({n['author']})\n{n['text']}")
     for kind, title in (("todo", "Open"), ("idee", "Ideas")):
-        rows = [t for t in todos if not t["done"] and t["kind"] == kind]
+        rows = [t for t in todos if t["kind"] == kind]
         out.append(f"\n## {title}")
         out += [f"- [ ] #{t['id']} (P{t['prio']}) {t['text']}" for t in rows] or ["- –"]
     out.append("\n## Recently done")
-    done = [t for t in todos if t["done"]][-5:]
     out += [f"- [x] #{t['id']} {t['text']} ({t['done_at']})" for t in done] or ["- –"]
     out.append("\n## Log")
     out += [f"- {a['ts']} {a['text']}" for a in log] or ["- –"]
@@ -208,7 +217,7 @@ def index(request: Request, status: str = "aktiv", sort: str = "", hide_stopped:
         projects = con.execute(
             "SELECT p.*, "
             "(SELECT COUNT(*) FROM todos t WHERE t.project=p.slug AND t.done=0 AND t.kind='todo') AS open_n, "
-            "(SELECT COUNT(*) FROM todos t WHERE t.project=p.slug AND t.done=0 AND t.kind='idee') AS idea_n, "
+            "(SELECT COUNT(*) FROM todos t WHERE t.project=p.slug AND t.done=0 AND t.kind='todo' AND t.prio=1) AS p1, "
             "(SELECT MAX(ts) FROM activity a WHERE a.project=p.slug) AS last_ts "
             "FROM projects p WHERE p.status=? ORDER BY p.sort, p.name",
             (status,),
@@ -224,10 +233,7 @@ def index(request: Request, status: str = "aktiv", sort: str = "", hide_stopped:
                 "SELECT * FROM todos WHERE project=? AND done=0 AND kind='todo' ORDER BY prio, id LIMIT 1",
                 (p["slug"],),
             ).fetchone()
-            p1 = con.execute(
-                "SELECT COUNT(*) FROM todos WHERE project=? AND done=0 AND kind='todo' AND prio=1",
-                (p["slug"],),
-            ).fetchone()[0]
+            p1 = p["p1"]
             last = max(p["last_ts"] or "", pushed.get(p["repo"].lower(), "")[:10].replace("T", " "))
             quiet = status == "aktiv" and p["open_n"] == 0 and (not last or ago_days(last) > dormant_days)
             groups[p["area"] if p["area"] in groups else area_names[0]]["dormant" if quiet else "active"].append(
@@ -242,10 +248,6 @@ def index(request: Request, status: str = "aktiv", sort: str = "", hide_stopped:
         recent = con.execute(
             "SELECT a.*, p.name AS pname FROM activity a JOIN projects p ON p.slug=a.project "
             "ORDER BY a.id DESC LIMIT 10"
-        ).fetchall()
-        inbox = con.execute(
-            "SELECT t.*, p.name AS pname FROM todos t JOIN projects p ON p.slug=t.project "
-            "WHERE t.seen=0 AND t.done=0 ORDER BY t.id DESC"
         ).fetchall()
         brief = digest.summary_counts(con)
         board = {1: [], 2: [], 3: []}
@@ -264,7 +266,7 @@ def index(request: Request, status: str = "aktiv", sort: str = "", hide_stopped:
     guest_rows = [g for g in px.values() if not (hide and g["status"] != "running")]
     return templates.TemplateResponse(
         request, "index.html",
-        {"brief": brief, "inbox": inbox, "prs": github.open_prs(), "dormant_days": dormant_days,
+        {"brief": brief, "prs": github.open_prs(), "dormant_days": dormant_days,
          "px_enabled": bool(px) or proxmox.enabled(), "hide_stopped": hide, "guests": guest_rows, "linked": linked,
          "sort": sort, "groups": groups, "focus": focus, "recent": recent, "status": status, "board": board,
          "board_projects": sorted({t["pname"] for col in board.values() for t in col}),
@@ -387,6 +389,8 @@ def search(request: Request, q: str = ""):
 
 @app.post("/p/{slug}/add")
 def web_add(slug: str, text: str = Form(...), prio: int = Form(2), kind: str = Form("todo")):
+    if prio not in (1, 2, 3) or kind not in ("todo", "idee"):
+        raise HTTPException(400)
     with closing(db()) as con:
         project_or_404(con, slug)
         con.execute(
@@ -411,35 +415,6 @@ def web_toggle(tid: int, next: str = Form("")):
                         (t["project"], f"{tr('log.done')} {t['text']}", now()))
         con.commit()
     return RedirectResponse(safe_next(next, f"/p/{t['project']}"), status_code=303)
-
-
-@app.post("/t/{tid}/seen")
-def web_seen(tid: int, next: str = Form("/")):
-    with closing(db()) as con:
-        con.execute("UPDATE todos SET seen=1 WHERE id=?", (tid,))
-        con.commit()
-    return RedirectResponse(safe_next(next), status_code=303)
-
-
-@app.post("/t/{tid}/finished")
-def web_finished(tid: int, next: str = Form("/")):
-    with closing(db()) as con:
-        t = con.execute("SELECT * FROM todos WHERE id=?", (tid,)).fetchone()
-        if not t:
-            raise HTTPException(404)
-        con.execute("UPDATE todos SET seen=1, done=1, done_at=? WHERE id=?", (now(), tid))
-        con.execute("INSERT INTO activity(project,text,ts) VALUES(?,?,?)",
-                    (t["project"], f"{tr('log.done')} {t['text']}", now()))
-        con.commit()
-    return RedirectResponse(safe_next(next), status_code=303)
-
-
-@app.post("/inbox/seen-all")
-def web_seen_all(next: str = Form("/")):
-    with closing(db()) as con:
-        con.execute("UPDATE todos SET seen=1 WHERE seen=0")
-        con.commit()
-    return RedirectResponse(safe_next(next), status_code=303)
 
 
 @app.post("/t/{tid}/delete")
@@ -499,10 +474,14 @@ def web_log(slug: str, text: str = Form(...)):
 
 # ---------- API (für Claude / Skill) ----------
 
+Prio = Literal[1, 2, 3]
+Kind = Literal["todo", "idee"]
+
+
 class TodoIn(BaseModel):
     text: str
-    prio: int = 2
-    kind: str = "todo"
+    prio: Prio = 2
+    kind: Kind = "todo"
     short: str = ""
     check: str = ""
 
@@ -680,8 +659,8 @@ class TodoPatch(BaseModel):
     text: str | None = None
     short: str | None = None
     check: str | None = None
-    prio: int | None = None
-    kind: str | None = None
+    prio: Prio | None = None
+    kind: Kind | None = None
 
 
 @app.patch("/api/todos/{tid}")
@@ -705,7 +684,7 @@ def api_add(slug: str, t: TodoIn):
     with closing(db()) as con:
         project_or_404(con, slug)
         cur = con.execute(
-            "INSERT INTO todos(project,text,kind,prio,created,source,seen,short,check_spec) VALUES(?,?,?,?,?,'agent',0,?,?)",
+            "INSERT INTO todos(project,text,kind,prio,created,source,short,check_spec) VALUES(?,?,?,?,?,'agent',?,?)",
             (slug, t.text, t.kind, t.prio, now(), t.short.strip(), t.check.strip()),
         )
         con.commit()

@@ -80,8 +80,8 @@ TODOS = [
     ("recipe-box", "Print stylesheet for recipe pages", 3, "todo", None),
 ]
 
-# agent-created, unseen: slug, text, prio
-INBOX = [
+# agent-created: slug, text, prio
+AGENT_TODOS = [
     ("dental-booking", "Time zone bug: appointments after 23:00 are stored one day earlier", 1),
     ("timesheets", "Dependency update: three packages have security fixes", 2),
     ("invoice-bot", "Log file grows without rotation, add logrotate", 3),
@@ -136,8 +136,8 @@ def main():
         for slug, text, prio, kind, done in TODOS:
             con.execute("INSERT INTO todos(project,text,kind,prio,done,created,done_at) VALUES(?,?,?,?,?,?,?)",
                         (slug, text, kind, prio, 0 if done is None else 1, ts(20), None if done is None else ts(done)))
-        for slug, text, prio in INBOX:
-            con.execute("INSERT INTO todos(project,text,kind,prio,created,source,seen) VALUES(?,?,'todo',?,?,'agent',0)",
+        for slug, text, prio in AGENT_TODOS:
+            con.execute("INSERT INTO todos(project,text,kind,prio,created,source) VALUES(?,?,'todo',?,?,'agent')",
                         (slug, text, prio, ts(0, 8)))
         for slug, text, author, pinned, days in NOTES:
             con.execute("INSERT INTO notes(project,text,author,pinned,created) VALUES(?,?,?,?,?)",

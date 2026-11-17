@@ -12,7 +12,7 @@ AgentWorkbench ist so gebaut, dass ein KI-Agent ein Projekt übernehmen kann wie
 4. **Spur.** Am Ende schreibt er einen Protokolleintrag: was getan wurde, in einem Satz, am besten mit Commit-Hash.
 5. **Abschluss-Check.** Bevor er fertig ist, geht er die offenen Aufgaben noch einmal durch und hakt alles ab, was erledigt und belegt ist. Nur teilweise Erledigtes bleibt offen und wird auf den Rest gekürzt. Unsichere Fälle meldet er dir, statt sie abzuhaken. Der Skill und der `CLAUDE.md`-Ausschnitt in `examples/claude-code` machen das zur festen Regel.
 
-Ohne Token wird nichts geschrieben, und jeder Eintrag eines Agenten ist sichtbar: Neue Aufgaben landen in deinem **Posteingang**, bis du sie übernimmst, als erledigt markierst oder verwirfst.
+Ohne Token wird nichts geschrieben, und jeder Eintrag eines Agenten ist sichtbar: Neue Aufgaben landen direkt im Board, jede Änderung steht im Verlauf.
 
 ## Protokoll, Notiz oder Dokument?
 

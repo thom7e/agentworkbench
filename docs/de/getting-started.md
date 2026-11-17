@@ -30,7 +30,7 @@ Alle Einstellungen stehen in der [Konfiguration](configuration.md).
 
 ### Optional: GitHub
 
-Mit einem GitHub-Konto und einem lesenden Token zeigen Projektseiten Branches und letzte Commits, die Projektliste zeigt den Zeitpunkt des letzten Pushs, und offene Pull Requests erscheinen im Posteingang und im Briefing.
+Mit einem GitHub-Konto und einem lesenden Token zeigen Projektseiten Branches und letzte Commits, die Projektliste zeigt den Zeitpunkt des letzten Pushs, und offene Pull Requests erscheinen auf der Startseite und im Briefing.
 
 1. <https://github.com/settings/personal-access-tokens/new> öffnen
 2. Resource owner: dein Konto. Repository access: *All repositories* (damit neue Repositories automatisch erscheinen)
@@ -67,7 +67,7 @@ Eine Projektseite hat vier Reiter: **Aufgaben** (offene Aufgaben, Ideen, Erledig
 Auf der Startseite:
 
 - **Heute zuerst** listet alle dringenden Aufgaben (Priorität 1) der aktiven Projekte.
-- Der **Posteingang** erscheint, wenn Agenten Aufgaben angelegt haben. Wähle je Aufgabe *Übernehmen* (behalten), *Bereits erledigt* (als erledigt ablegen) oder *Verwerfen* (löschen).
+- Aufgaben von Agenten landen direkt im Board. Offene Pull Requests stehen auf der Startseite.
 - Das **Prioritäts-Board** (am Desktop standardmäßig eingeklappt) zeigt jede offene Aufgabe in drei Spalten. Ziehe eine Karte, um die Priorität zu ändern.
 - Auf dem Handy wechselt die untere Leiste zwischen **Heute**, **Projekte**, **Briefing** und **Mehr**. Der **+**-Knopf legt von überall eine Aufgabe an.
 
@@ -95,7 +95,7 @@ Alles ist über das Suchfeld auf der Startseite durchsuchbar.
 ## Ein typischer Tag
 
 1. Das Briefing kommt an. Tippe darauf und lies, was in deinen Live-Projekten dringend ist.
-2. Sieh in den *Posteingang* und übernimm oder verwirf, was Agenten vorgeschlagen haben.
+2. Sieh im *Verlauf* nach, was Agenten getan und angelegt haben.
 3. Wähle ein Projekt, lass den Agenten sein Briefing lesen und arbeiten (unter Windows öffnet der Knopf `>_` ein Terminal für eine Aufgabe).
 4. Am Ende protokolliert der Agent, was er getan hat, und hinterlässt eine Notiz zu allem, was man sich merken sollte.
 5. Prüfregeln schließen, was sie belegen können. Am nächsten Morgen zeigt das Briefing den neuen Stand.

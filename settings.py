@@ -1,7 +1,7 @@
 import json
 from contextlib import closing
 
-from db import db
+import db as database
 
 DEFAULTS = {
     "site_title": "AgentWorkbench",
@@ -20,19 +20,26 @@ DEFAULTS = {
 }
 
 
+_cache = {}
+
+
 def get(key):
-    with closing(db()) as con:
-        row = con.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
-    return row["value"] if row else DEFAULTS.get(key, "")
+    ck = (database.DB_PATH, key)
+    if ck not in _cache:
+        with closing(database.db()) as con:
+            row = con.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+        _cache[ck] = row["value"] if row else DEFAULTS.get(key, "")
+    return _cache[ck]
 
 
 def put(key, value):
-    with closing(db()) as con:
+    with closing(database.db()) as con:
         con.execute(
             "INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
             (key, value),
         )
         con.commit()
+    _cache[(database.DB_PATH, key)] = value
 
 
 def areas():

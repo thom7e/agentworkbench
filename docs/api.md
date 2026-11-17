@@ -97,7 +97,7 @@ curl -X PATCH -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/js
 | `kind` | Defaults to `todo` |
 | `check` | Optional machine check as a JSON **string**, see [Briefing and checks](briefing-and-checks.md#checks). When it passes, the task is ticked off automatically |
 
-Returns `{"id": 42}`. Tasks created through the API are marked as coming from an agent and appear in the **inbox** until a person accepts, finishes or discards them.
+Returns `{"id": 42}`. Tasks created through the API are marked as coming from an agent and go straight onto the board.
 
 ### `PATCH /api/todos/{id}`
 

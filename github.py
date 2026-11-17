@@ -3,10 +3,12 @@ import os
 import threading
 import time
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 
 import settings
 
 TTL = 900
+RETRY = 60
 _cache = {}
 
 
@@ -27,7 +29,9 @@ def _fetch(key, path, raw):
             body = r.read().decode("utf-8")
         data = body if raw else json.loads(body)
     except Exception:
-        return None
+        old = _cache.get(key, (0, None))[1]
+        _cache[key] = (time.time() - TTL + RETRY, old)
+        return old
     _cache[key] = (time.time(), data)
     return data
 
@@ -62,12 +66,13 @@ def pushed_map():
 def repo_detail(full_name):
     if not enabled():
         return None
-    info = _get(f"/repos/{full_name}")
+    base = f"/repos/{full_name}"
+    with ThreadPoolExecutor(4) as pool:
+        info, branches, commits, readme = pool.map(lambda a: _get(*a), [
+            (base,), (base + "/branches?per_page=30",), (base + "/commits?per_page=10",), (base + "/readme", True)])
     if not info:
         return None
-    branches = _get(f"/repos/{full_name}/branches?per_page=30") or []
-    commits = _get(f"/repos/{full_name}/commits?per_page=10") or []
-    readme = _get(f"/repos/{full_name}/readme", raw=True) or ""
+    branches, commits, readme = branches or [], commits or [], readme or ""
     return {
         "url": info["html_url"],
         "private": info["private"],

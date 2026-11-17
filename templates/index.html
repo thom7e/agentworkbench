@@ -29,19 +29,10 @@
 </div>
 {% endif %}
 
-{% if inbox or prs %}
-<section class="inbox" data-tab="today" data-more="{{ _('inbox.more') }}"><div class="board-head"><div><h2>{{ _('inbox.title') }}</h2><p class="hint2">{{ _('inbox.hint', n=inbox|length, m=prs|length) }}</p></div>
-{% if inbox %}<form method="post" action="/inbox/seen-all"><input type="hidden" name="next" value="/"><button class="go ghost" title="{{ _('inbox.all.tip') }}">{{ _('inbox.all') }}</button></form>{% endif %}</div>
-<div class="inbox-grid">
-{% if inbox %}<div class="sheet"><h3>{{ _('inbox.new') }}</h3>
-{% for t in inbox %}<div class="task"><div class="grow"><a class="proj" href="/p/{{ t.project }}">{{ t.pname }} <time>{{ t.created|fmtdate }}</time></a><span class="txt">{{ t.text|replace('**','') }}</span>
-<div class="actions">
-<form method="post" action="/t/{{ t.id }}/seen"><input type="hidden" name="next" value="/"><button class="act keep" title="{{ _('inbox.keep.tip') }}">{{ _('inbox.keep') }}</button></form>
-<form method="post" action="/t/{{ t.id }}/finished"><input type="hidden" name="next" value="/"><button class="act fin" title="{{ _('inbox.done.tip') }}">{{ _('inbox.done') }}</button></form>
-<form method="post" action="/t/{{ t.id }}/delete"><input type="hidden" name="next" value="/"><button class="act del" title="{{ _('inbox.drop.tip') }}">{{ _('inbox.drop') }}</button></form>
-</div></div></div>{% endfor %}</div>{% endif %}
-{% if prs %}<div class="sheet"><h3>{{ _('inbox.prs') }}</h3>
-{% for r in prs %}<div class="task"><div><span class="proj">{{ r.repo }} · {{ r.author }} · {{ r.created|fmtdate }}{% if r.draft %} · {{ _('inbox.draft') }}{% endif %}</span><a class="txt" href="{{ r.url }}">{{ r.title }}</a></div></div>{% endfor %}</div>{% endif %}
+{% if prs %}
+<section class="inbox" data-tab="today" data-more="{{ _('inbox.more') }}"><h2>{{ _('inbox.prs') }}</h2>
+<div class="sheet">
+{% for r in prs %}<div class="task"><div><span class="proj">{{ r.repo }} · {{ r.author }} · {{ r.created|fmtdate }}{% if r.draft %} · {{ _('inbox.draft') }}{% endif %}</span><a class="txt" href="{{ r.url }}">{{ r.title }}</a></div></div>{% endfor %}
 </div></section>
 {% endif %}
 

@@ -48,7 +48,7 @@ Fill it with demo data first if you like: `AGENTWORKBENCH_DB=./dev.db python scr
 pytest
 ```
 
-The tests start the app against a temporary database and cover setup, login, passkeys (with a software authenticator), the API, the inbox, notes, documents, search, the briefing, checks, push, the Proxmox integration (with a faked Proxmox), translations and the demo data. The CI workflow in `.github/workflows/ci.yml` runs them and also builds the Docker image, starts it and checks the health endpoint.
+The tests start the app against a temporary database and cover setup, login, passkeys (with a software authenticator), the API, notes, documents, search, the briefing, checks, push, the Proxmox integration (with a faked Proxmox), translations and the demo data. The CI workflow in `.github/workflows/ci.yml` runs them and also builds the Docker image, starts it and checks the health endpoint.
 
 ## Database changes
 
@@ -56,7 +56,7 @@ The tests start the app against a temporary database and cover setup, login, pas
 
 ## Translations
 
-Texts are keyed: `_('inbox.title')` in templates, `t('key')` in Python. Add a key to both dictionaries in `i18n.py` or `i18n_ui.py`. Texts with placeholders use `{name}` and are called with keyword arguments: `_('row.open', n=3)`.
+Texts are keyed: `_('board.title')` in templates, `t('key')` in Python. Add a key to both dictionaries in `i18n.py` or `i18n_ui.py`. Texts with placeholders use `{name}` and are called with keyword arguments: `_('row.open', n=3)`.
 
 To add a language, add its code to the dictionaries (`TEXTS` in `i18n.py`, a new dictionary next to `UI_DE` and `UI_EN` in `i18n_ui.py`), and to the allowed values in `render.lang()` and in `settings_save` in `admin.py`, then add an option to `admin_settings.html`. Missing keys fall back to English.
 

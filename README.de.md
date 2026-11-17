@@ -101,7 +101,7 @@ Ein FastAPI-Prozess, eine SQLite-Datei, kein Build-Schritt. Oberfläche auf Deut
 - **Heute zuerst**: alle dringenden Aufgaben über alle Projekte in einer Liste, direkt abhakbar.
 - **Projekte** in Gruppen nach Wahl, mit einem **live**-Schalter für alles, was für Kunden oder produktiv läuft. Live-Projekte stehen mit einer Lampe im Seitenmenü, die rot wird, wenn etwas dringend ist.
 - **Projektseiten** mit Reitern: Aufgaben und Ideen, Notizen, Dokumente und ein Verlauf-Reiter mit Protokoll, Git-Branches und letzten Commits.
-- **Posteingang** für Aufgaben, die Agenten seit deinem letzten Blick angelegt haben: *Übernehmen*, *Bereits erledigt* oder *Verwerfen*. Offene Pull Requests erscheinen dort auch.
+- Aufgaben von Agenten landen **direkt im Board**, ohne Übernehmen. Offene Pull Requests stehen auf der Startseite.
 - **Prioritäts-Board** (Karte ziehen, um die Priorität zu ändern) und **Suche** über Notizen, Dokumente, Aufgaben und Projekte.
 
 **Briefing und Automatik**
@@ -149,7 +149,7 @@ AGENTWORKBENCH_DB=./demo.db python scripts/demo_seed.py
 AGENTWORKBENCH_DB=./demo.db uvicorn app:app
 ```
 
-Anmelden mit `demo-password-123`. Die Demo enthält erfundene Projekte, einen Posteingang, Notizen und Dokumente.
+Anmelden mit `demo-password-123`. Die Demo enthält erfundene Projekte, Aufgaben von Agenten, Notizen und Dokumente.
 
 > Passkeys und Push-Benachrichtigungen brauchen HTTPS (eine echte Domain oder `localhost`). Siehe [Betrieb](docs/de/deployment.md#https-und-reverse-proxy).
 

@@ -24,7 +24,7 @@ Start every command with:
    **Check at the start:** compare every open task with the real state (read-only: repository, service, file, log). If a task is provably done already, tick it off at once and name the evidence in the log ("checked: ...").
 2. **While working**
    - **Tick off at once** when a task is finished and verified, not only at the end. Also tasks that were finished on the side: `curl -s -X POST -H "$H" "$AWB_URL/api/todos/<id>/done"`
-   - Add a task (it lands in the user's inbox):
+   - Add a task (it goes straight onto the board):
      ```bash
      curl -s -X POST -H "$H" -H "Content-Type: application/json; charset=utf-8" \
        --data-binary '{"text":"...","short":"...","prio":2}' "$AWB_URL/api/projects/<slug>/todos"

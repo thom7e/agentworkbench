@@ -101,7 +101,7 @@ One FastAPI process, one SQLite file, no build step. English and German interfac
 - **Today first**: every urgent task across all projects in one list, tick off in place.
 - **Projects** in groups you define, with a *live* flag for what runs for customers or in production. Live projects are listed in the side menu with a lamp that turns red when something is urgent.
 - **Project pages** with tabs: tasks and ideas, notes, documents, and an activity tab with the log, Git branches and latest commits.
-- **Inbox** for tasks that agents created since you last looked: *Accept*, *Already done* or *Discard*. Open pull requests show up there too.
+- Tasks from agents go **straight onto the board**, no accepting needed. Open pull requests are listed on the start page.
 - **Priority board** (drag a card to change its priority) and **search** across notes, documents, tasks and projects.
 
 **Briefing and automation**
@@ -149,7 +149,7 @@ AGENTWORKBENCH_DB=./demo.db python scripts/demo_seed.py
 AGENTWORKBENCH_DB=./demo.db uvicorn app:app
 ```
 
-Sign in with `demo-password-123`. The demo contains fictional projects, an inbox, notes and documents.
+Sign in with `demo-password-123`. The demo contains fictional projects, tasks from agents, notes and documents.
 
 > Passkeys and push notifications need HTTPS (a real domain, or `localhost`). See [Deployment](docs/deployment.md#https-and-reverse-proxy).
 

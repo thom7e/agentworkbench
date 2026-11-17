@@ -85,7 +85,6 @@ CREATE TABLE IF NOT EXISTS api_tokens (
 # Spalten, die nach dem ersten Release dazugekommen sind
 MIGRATIONS = (
     ("todos", "source TEXT NOT NULL DEFAULT 'user'"),
-    ("todos", "seen INTEGER NOT NULL DEFAULT 1"),
     ("todos", "short TEXT NOT NULL DEFAULT ''"),
     ("todos", "check_spec TEXT NOT NULL DEFAULT ''"),
     ("todos", "check_note TEXT NOT NULL DEFAULT ''"),
@@ -108,6 +107,7 @@ def db():
 
 def init():
     with closing(db()) as con:
+        con.execute("PRAGMA journal_mode=WAL")
         con.executescript(SCHEMA)
         for table, col in MIGRATIONS:
             try:

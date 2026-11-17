@@ -67,25 +67,10 @@ def test_admin_project_and_token_flow(client):
     assert other.get("/api/overview", headers={"Authorization": "Bearer nope"}).status_code == 401
 
 
-def test_agent_todo_lands_in_inbox_until_seen(client):
+def test_agent_todo_goes_straight_to_the_board(client):
     html = client.get("/").text
-    assert "Write docs" in html
-    tid = int(html.split("/t/")[1].split("/")[0])
-    client.post(f"/t/{tid}/seen", data={"next": "/"})
-    assert "Neue Aufgaben" not in client.get("/").text
-
-
-def test_inbox_item_can_be_marked_finished(client):
-    other = TestClient(app, follow_redirects=False)
-    token = client.post("/admin/tokens", data={"name": "t2"}).text.split('class="token">')[1].split("<")[0]
-    r = other.post("/api/projects/demo-app/todos", json={"text": "Already done thing"},
-                   headers={"Authorization": f"Bearer {token}"})
-    tid = r.json()["id"]
-    assert "Already done thing" in client.get("/").text
-    client.post(f"/t/{tid}/finished", data={"next": "/"})
-    html = client.get("/p/demo-app").text
-    assert "Already done thing" in html
-    assert f"/t/{tid}/" not in client.get("/").text  # finished: no longer an open task or inbox entry
+    assert "Write docs" in html and 'class="card"' in html
+    assert "/seen" not in html and "/finished" not in html
 
 
 def test_patch_project_and_multiple_notes(client):
@@ -218,6 +203,25 @@ def test_markdown_import_and_json_export(client):
     data = client.get("/admin/export.json").json()
     assert any(p["slug"] == "imported" for p in data["projects"])
     assert {t["text"] for t in data["todos"] if t["project"] == "imported"} == {"open task", "finished task"}
+
+
+def test_json_import_keeps_existing_project_data(client):
+    before = [t for t in client.get("/admin/export.json").json()["todos"] if t["project"] == "imported"]
+    backup = {"projects": [{"slug": "imported", "name": "Imported again"}], "todos": []}
+    client.post("/admin/import.json", files={"file": ("b.json", __import__("json").dumps(backup), "application/json")})
+    data = client.get("/admin/export.json").json()
+    assert [t for t in data["todos"] if t["project"] == "imported"] == before
+    assert any(p["name"] == "Imported again" for p in data["projects"])
+
+
+def test_invalid_prio_is_rejected(client):
+    token = client.post("/admin/tokens", data={"name": "t4"}).text.split('class="token">')[1].split("<")[0]
+    h = {"Authorization": f"Bearer {token}"}
+    other = TestClient(app, follow_redirects=False)
+    assert other.post("/api/projects/demo-app/todos", json={"text": "x", "prio": 4}, headers=h).status_code == 422
+    tid = other.post("/api/projects/demo-app/todos", json={"text": "x"}, headers=h).json()["id"]
+    assert other.patch(f"/api/todos/{tid}", json={"prio": 0}, headers=h).status_code == 422
+    assert client.get("/").status_code == 200
 
 
 def test_settings_roundtrip(client):

@@ -190,11 +190,12 @@ async def import_json(file: UploadFile = File(...)):
         for p in projects:
             cols = [c for c in p if c in ("slug", "name", "status", "area", "deploy", "stack", "summary",
                                          "vault_note", "repo", "wiki", "sort", "vmid")]
-            con.execute(f"INSERT OR REPLACE INTO projects({','.join(cols)}) VALUES({','.join('?' * len(cols))})",
+            con.execute(f"INSERT INTO projects({','.join(cols)}) VALUES({','.join('?' * len(cols))}) "
+                        f"ON CONFLICT(slug) DO UPDATE SET {','.join(f'{c}=excluded.{c}' for c in cols if c != 'slug')}",
                         [p[c] for c in cols])
         for t in todos:
             cols = [c for c in t if c in ("project", "text", "kind", "prio", "done", "created", "done_at",
-                                         "source", "seen")]
+                                         "source")]
             con.execute(f"INSERT INTO todos({','.join(cols)}) VALUES({','.join('?' * len(cols))})",
                         [t[c] for c in cols])
         for a in activity:

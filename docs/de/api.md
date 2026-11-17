@@ -182,6 +182,7 @@ Diese nutzt die Weboberfläche, sie brauchen eine angemeldete Browser-Sitzung, k
 |---|---|
 | `GET /briefing` | Die Briefing-Seite |
 | `GET /push/key`, `POST /push/subscribe`, `POST /push/test` | Ein Gerät für Push-Benachrichtigungen anmelden und einen Test senden |
+| `POST /api/push` | Push-Benachrichtigung an alle Geräte senden: `{"title","body","url"}`, `url` muss ein Pfad sein, z. B. `/p/<slug>` |
 | `GET /passkey/register/options`, `POST /passkey/register/verify`, `POST /passkey/{id}/delete` | Passkeys hinzufügen und entfernen |
 | `GET /passkey/login/options`, `POST /passkey/login/verify` | Passkey-Anmeldung (öffentlich) |
 | `GET /sw.js` | Der Service Worker (öffentlich) |

@@ -256,7 +256,7 @@ def index(request: Request, status: str = "aktiv", sort: str = "", hide_stopped:
             "WHERE t.done=0 AND t.kind='todo' AND p.status=? ORDER BY p.sort, p.name, t.id",
             (status,),
         ):
-            board[t["prio"]].append(t)
+            board[min(max(t["prio"], 1), 3)].append(t)
     for grp in groups.values():
         if sort == "offen":
             grp["active"].sort(key=lambda x: (-x[0]["open_n"], -x[2], x[0]["name"].lower()))
@@ -721,7 +721,7 @@ def api_log(slug: str, e: LogIn):
 
 @app.post("/api/push")
 def api_push(e: PushIn):
-    return {"sent": push.send(e.title, e.body, e.url)}
+    return {"sent": push.send(e.title, e.body, safe_next(e.url))}
 
 
 @app.get("/export/notes.md", response_class=PlainTextResponse)

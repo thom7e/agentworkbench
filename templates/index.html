@@ -30,9 +30,9 @@
 {% endif %}
 
 {% if prs %}
-<section class="inbox" data-tab="today" data-more="{{ _('inbox.more') }}"><h2>{{ _('inbox.prs') }}</h2>
+<section class="prs" data-tab="today" data-more="{{ _('prs.more') }}"><h2>{{ _('prs.title') }}</h2>
 <div class="sheet">
-{% for r in prs %}<div class="task"><div><span class="proj">{{ r.repo }} · {{ r.author }} · {{ r.created|fmtdate }}{% if r.draft %} · {{ _('inbox.draft') }}{% endif %}</span><a class="txt" href="{{ r.url }}">{{ r.title }}</a></div></div>{% endfor %}
+{% for r in prs %}<div class="task"><div><span class="proj">{{ r.repo }} · {{ r.author }} · {{ r.created|fmtdate }}{% if r.draft %} · {{ _('prs.draft') }}{% endif %}</span><a class="txt" href="{{ r.url }}">{{ r.title }}</a></div></div>{% endfor %}
 </div></section>
 {% endif %}
 

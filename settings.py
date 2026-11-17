@@ -1,4 +1,5 @@
 import json
+import time
 from contextlib import closing
 
 import db as database
@@ -20,16 +21,20 @@ DEFAULTS = {
 }
 
 
+TTL = 5
 _cache = {}
 
 
 def get(key):
     ck = (database.DB_PATH, key)
-    if ck not in _cache:
-        with closing(database.db()) as con:
-            row = con.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
-        _cache[ck] = row["value"] if row else DEFAULTS.get(key, "")
-    return _cache[ck]
+    hit = _cache.get(ck)
+    if hit and time.time() - hit[0] < TTL:
+        return hit[1]
+    with closing(database.db()) as con:
+        row = con.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+    value = row["value"] if row else DEFAULTS.get(key, "")
+    _cache[ck] = (time.time(), value)
+    return value
 
 
 def put(key, value):
@@ -39,7 +44,7 @@ def put(key, value):
             (key, value),
         )
         con.commit()
-    _cache[(database.DB_PATH, key)] = value
+    _cache[(database.DB_PATH, key)] = (time.time(), value)
 
 
 def areas():

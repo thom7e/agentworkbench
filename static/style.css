@@ -96,12 +96,9 @@ button.go{font:inherit;font-weight:600;background:var(--accent);color:var(--bg);
 .dormant summary h2::before{content:"▸ ";color:var(--mut)}.dormant[open] summary h2::before{content:"▾ "}
 form.inline{display:inline;margin:0}form.inline select{padding:2px 6px;font-size:14px}
 
-.inbox{margin-top:12px;margin-bottom:12px}
-.inbox-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
-.inbox h3{font-size:17px;margin:10px 0 2px}
-.inbox .task{align-items:center}.inbox .task>div{flex:1}
-.inbox .proj time{font-weight:400;margin-left:6px}
-.inbox a.txt{color:var(--accent)}
+.prs{margin-top:12px;margin-bottom:12px}
+.prs .task{align-items:center}.prs .task>div{flex:1}
+.prs a.txt{color:var(--accent)}
 button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:400;padding:4px 10px}
 button.ghost:hover{background:var(--hover)}
 
@@ -139,8 +136,7 @@ body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-ri
   .row{padding:14px 12px}
   .top nav a,.top nav button.linklike{display:inline-block;padding:8px 0;margin-left:14px}
   .hello{padding-top:12px}
-  .inbox-grid{grid-template-columns:1fr}
-  .inbox .task{flex-wrap:wrap}
+  .prs .task{flex-wrap:wrap}
   .fgrid{max-width:none}
   .add input[name=text]{min-width:100%}
 }

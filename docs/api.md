@@ -182,6 +182,7 @@ These are used by the web interface and need a signed-in browser session, not a 
 |---|---|
 | `GET /briefing` | The briefing page |
 | `GET /push/key`, `POST /push/subscribe`, `POST /push/test` | Register a device for push notifications and send a test |
+| `POST /api/push` | Send a push notification to all devices: `{"title","body","url"}`, `url` must be a path such as `/p/<slug>` |
 | `GET /passkey/register/options`, `POST /passkey/register/verify`, `POST /passkey/{id}/delete` | Add and remove passkeys |
 | `GET /passkey/login/options`, `POST /passkey/login/verify` | Passkey sign-in (public) |
 | `GET /sw.js` | The service worker (public) |

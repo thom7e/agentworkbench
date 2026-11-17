@@ -205,13 +205,21 @@ def test_markdown_import_and_json_export(client):
     assert {t["text"] for t in data["todos"] if t["project"] == "imported"} == {"open task", "finished task"}
 
 
-def test_json_import_keeps_existing_project_data(client):
-    before = [t for t in client.get("/admin/export.json").json()["todos"] if t["project"] == "imported"]
-    backup = {"projects": [{"slug": "imported", "name": "Imported again"}], "todos": []}
-    client.post("/admin/import.json", files={"file": ("b.json", __import__("json").dumps(backup), "application/json")})
+def test_json_reimport_restores_without_duplicates(client):
+    import json
+    client.post("/p/imported/live", data={"live": "1"})
+    backup = client.get("/admin/export.json").json()
+    tid = next(t["id"] for t in backup["todos"] if t["project"] == "imported")
+    for t in backup["todos"]:
+        if t["id"] == tid:
+            t["short"] = "Kurz"
+    client.post("/admin/import.json", files={"file": ("b.json", json.dumps(backup), "application/json")})
     data = client.get("/admin/export.json").json()
-    assert [t for t in data["todos"] if t["project"] == "imported"] == before
-    assert any(p["name"] == "Imported again" for p in data["projects"])
+    mine = [t for t in data["todos"] if t["project"] == "imported"]
+    assert len(mine) == len([t for t in backup["todos"] if t["project"] == "imported"])
+    assert any(t["short"] == "Kurz" for t in mine)
+    assert next(p for p in data["projects"] if p["slug"] == "imported")["live"] == 1
+    client.post("/p/imported/live", data={})
 
 
 def test_invalid_prio_is_rejected(client):

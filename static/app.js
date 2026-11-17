@@ -46,16 +46,16 @@
     if (hash.indexOf('doc-') === 0) { var target = document.getElementById(hash); if (target) { target.open = true; target.scrollIntoView(); } }
   }
 
-  // Inbox: only the first two entries on the phone
-  var inbox = document.querySelector('.inbox[data-more]');
-  if (inbox && mobile) {
-    inbox.querySelectorAll('.sheet').forEach(function (sheet) {
+  // Pull requests: only the first two entries on the phone
+  var prs = document.querySelector('.prs[data-more]');
+  if (prs && mobile) {
+    prs.querySelectorAll('.sheet').forEach(function (sheet) {
       var tasks = sheet.querySelectorAll('.task');
       if (tasks.length <= 2) return;
       tasks.forEach(function (t, i) { if (i >= 2) t.hidden = true; });
       var more = document.createElement('button');
       more.type = 'button'; more.className = 'linklike';
-      more.textContent = inbox.dataset.more.replace('{n}', tasks.length);
+      more.textContent = prs.dataset.more.replace('{n}', tasks.length);
       more.addEventListener('click', function () { tasks.forEach(function (t) { t.hidden = false; }); more.remove(); });
       sheet.appendChild(more);
     });

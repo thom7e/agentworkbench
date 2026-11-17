@@ -2,6 +2,7 @@ import json
 import os
 import threading
 import time
+import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
@@ -10,6 +11,7 @@ import settings
 TTL = 900
 RETRY = 60
 _cache = {}
+_pool = ThreadPoolExecutor(4)
 
 
 def _token():
@@ -28,12 +30,20 @@ def _fetch(key, path, raw):
                                     timeout=10) as r:
             body = r.read().decode("utf-8")
         data = body if raw else json.loads(body)
+    except urllib.error.HTTPError as e:
+        if e.code != 404:
+            return _retry_later(key)
+        data = None
     except Exception:
-        old = _cache.get(key, (0, None))[1]
-        _cache[key] = (time.time() - TTL + RETRY, old)
-        return old
+        return _retry_later(key)
     _cache[key] = (time.time(), data)
     return data
+
+
+def _retry_later(key):
+    old = _cache.get(key, (0, None))[1]
+    _cache[key] = (time.time() - TTL + RETRY, old)
+    return old
 
 
 def _get(path, raw=False):
@@ -67,9 +77,8 @@ def repo_detail(full_name):
     if not enabled():
         return None
     base = f"/repos/{full_name}"
-    with ThreadPoolExecutor(4) as pool:
-        info, branches, commits, readme = pool.map(lambda a: _get(*a), [
-            (base,), (base + "/branches?per_page=30",), (base + "/commits?per_page=10",), (base + "/readme", True)])
+    info, branches, commits, readme = _pool.map(lambda a: _get(*a), [
+        (base,), (base + "/branches?per_page=30",), (base + "/commits?per_page=10",), (base + "/readme", True)])
     if not info:
         return None
     branches, commits, readme = branches or [], commits or [], readme or ""
